@@ -1,18 +1,6 @@
 <?php
 
-require 'CSSMin/Colors.php';
-require 'CSSMin/Utils.php';
-require 'CSSMin/Minifier.php';
-
-require 'JSMinNew/src/Exception.php';
-require 'JSMinNew/src/Exceptions/BasicException.php';
-require 'JSMinNew/src/Exceptions/FileImportException.php';
-require 'JSMinNew/src/Exceptions/IOException.php';
-
-
-require 'JSMinNew/src/Minify.php';
-require 'JSMinNew/src/CSS.php';
-require 'JSMinNew/src/JS.php';
+require './vendor/autoload.php';
 
 use tubalmartin\CssMin\Minifier as CSSmin;
 

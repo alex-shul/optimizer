@@ -1,15 +1,18 @@
 {
-	"name": "alex-shul/Optimizer",
-	"description": "Optimization tool for CSS & JS files, created as Yii2 extension",
-	"license": "MIT",
-	"authors": [
+	"name":			"alex-shul/optimizer",
+	"description":	"Optimization tool for CSS & JS files, created as Yii2 extension",
+	"keywords":		["Optimization", "alex-shul", "CSS", "JS", "Minify", "Auto"],
+	"type":         "library",
+	"license": 		"MIT",
+	"authors": 		[
 		{
-			"name": "alex-shul",
+			"name": "Alex Shul",
 			"email": "work.alex.shul@gmail.com"
 		}
 	],
 	"minimum-stability": "dev",
 	"require": {
+		"php": ">=5.3.1",
 		"tubalmartin/cssmin": "*",
 		"matthiasmullie/minify": "*"
 	},
@@ -21,7 +24,7 @@
 	],
 	"autoload": {
 		"psr-4": {
-			"alex-shul\\Optimizer": ""
+			"alex-shul\\optimizer": "src/"
 		}
 	}
 }
