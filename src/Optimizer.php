@@ -1,21 +1,39 @@
 <?php
+/**
+ * @link https://github.com/alex-shul/yii2-optimizer
+ * @author Alex Shul
+ * @license MIT
+ */
 
 require './vendor/autoload.php';
 
+namespace alexshul\optimizer;
+
+use Yii;
+use yii\base\BootstrapInterface;
+use yii\base\Application;
 use tubalmartin\CssMin\Minifier as CSSmin;
 
-namespace alexshul\Optimizer;
+class Optimizer implements BootstrapInterface {
 
-class Optimizer {
+	public  $filesToWatch = array();
 
 	private $options = null;
-	private $ini_file_name = __DIR__ . '/common.ini';
+	private $iniFileName = Yii::getAlias('@runtime') . 'alex-shul/optimizer/cache.ini';
 
-	function __construct() {
-		$this->ini_file_name = $_SERVER['DOCUMENT_ROOT'] . $this->ini_file_name;
+	function __construct() {		
 	}
 
-	public function run () {		
+	public function bootstrap($app)
+    {
+        $app->on(Application::EVENT_BEFORE_REQUEST, function () {
+             $this->run();
+        });
+    }
+
+	public function run () {
+		var_dump( $this->$filesToWatch );
+		return;	
 		
 		$this->checkOptions();
 		//list($msec, $sec) = explode(chr(32), microtime());
@@ -26,9 +44,8 @@ class Optimizer {
 		$sections = array_keys( $this->options );
 
 		//echo '<pre>' . print_r( $opt, true ) . '</opt>';
-		//echo '<pre>' . print_r( $sections, true ) . '</opt>';
+		//echo '<pre>' . print_r( $sections, true ) . '</opt>';		
 		
-		$m = new MinifyManager;
 		foreach( $sections as $bundle ) {
 			//-----------------------------
 			//	Process CSS bundles
@@ -44,7 +61,7 @@ class Optimizer {
 				$out_css = $this->getOption( 'path_css' ) . $bundle;			
 				
 				if( !file_exists( $out_css ) || $in_css_latest > filemtime( $out_css ) ) {
-					$out_buf = $m->minifyCss($in_css);
+					$out_buf = $this->minifyCss($in_css);
 					$result = file_put_contents($out_css, $out_buf);
 					$this->changeVersion();					
 					$log_out .= '<br><br>Minified ' . $out_css . '!!!<br><br>';
@@ -65,7 +82,7 @@ class Optimizer {
 				$out_js = $this->getOption( 'path_js' ) . $bundle;			
 				
 				if( !file_exists( $out_js ) || $in_js_latest > filemtime( $out_js ) ) {
-					$out_buf = $m->minifyJSNew($in_js);
+					$out_buf = $this->minifyJSNew($in_js);
 					$result = file_put_contents($out_js, $out_buf);
 					$this->changeVersion();					
 					$log_out .= '<br><br>Minified ' . $out_js . '!!!<br><br>';
@@ -84,7 +101,7 @@ class Optimizer {
 
 	protected function checkOptions() {
 		if( !$this->options ) {			
-			$this->options = parse_ini_file( $this->ini_file_name, true );
+			$this->options = parse_ini_file( $this->iniFileName, true, INI_SCANNER_TYPED );
 		}		
 	}
 
@@ -102,7 +119,7 @@ class Optimizer {
 			$this->options['options']['version'] = 1;
 		}
 		define( 'CSS_AND_JS_FILES_VERSION', $this->options['options']['version'] );		
-		$this->writeIniFile( $this->ini_file_name, $this->options );
+		$this->writeIniFile( $this->iniFileName, $this->options );
 	}
 
 	public function writeIniFile($filename, $sectionsarray) {

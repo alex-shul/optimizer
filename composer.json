@@ -1,8 +1,8 @@
 {
-	"name":			"alex-shul/optimizer",
+	"name":			"alex-shul/yii2-optimizer",
 	"description":	"Optimization tool for CSS & JS files, created as Yii2 extension",
-	"keywords":		["Optimization", "alex-shul", "CSS", "JS", "Minify", "Auto"],
-	"type":         "library",
+	"keywords":		["optimization", "alex-shul", "css", "js", "minify", "auto", "yii2", "extension"],
+	"type":         "yii2-extension",
 	"license": 		"MIT",
 	"authors": 		[
 		{
@@ -13,18 +13,22 @@
 	"minimum-stability": "dev",
 	"require": {
 		"php": ">=5.3.1",
+		"yiisoft/yii2": "~2.0.0",
 		"tubalmartin/cssmin": "*",
 		"matthiasmullie/minify": "*"
 	},
 	"repositories": [
 		{
 			"type": "git",
-			"url": "https:github.com/alex-shul/Optimizer"
+			"url": "https:github.com/alex-shul/yii2-optimizer"
 		}
 	],
 	"autoload": {
 		"psr-4": {
-			"alex-shul\\optimizer": "src/"
+			"alexshul\\optimizer\\": "src/"
 		}
-	}
+	},
+	"extra": {
+        "bootstrap": "alexshul\\optimizer\\Optimizer"
+    }
 }
