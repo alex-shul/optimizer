@@ -45,8 +45,9 @@ class Cache {
         
 		foreach ( $this->options as $key => $value ) {
 			$content .= $key . ' = ' . $value . $linebreak;				
-		}		
-		
+		}	
+			
+		mkdir( $this->iniFileName, 0777, true );
         if ( false === file_put_contents( $this->iniFileName, $content ) ) {
             throw new Exception(
                 sprintf(
