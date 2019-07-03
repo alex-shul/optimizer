@@ -29,6 +29,6 @@
 		}
 	},
 	"extra": {
-        "bootstrap": "alexshul\\optimizer\\Optimizer"
+        "bootstrap": "alexshul\\optimizer\\Module"
     }
 }
