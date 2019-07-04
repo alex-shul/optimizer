@@ -11,11 +11,14 @@ use Yii;
 
 class Cache {
 
-	private $iniFileName = null;
+	private $iniFileName = '';
+	private $loaderFileName = '';
 	private $options = null;
 
 	function __construct() {
-		$this->iniFileName = Yii::getAlias('@runtime') . '/alex-shul/optimizer/cache.ini';
+		$base = Yii::getAlias('@runtime');
+		$this->iniFileName = $base . '/alex-shul/yii2-optimizer/cache.ini';
+		$this->loaderFileName = $base . '/alex-shul/yii2-optimizer/loader.js';
 		$this->check();	
 	}
 
@@ -45,9 +48,9 @@ class Cache {
         
 		foreach ( $this->options as $key => $value ) {
 			$content .= $key . ' = ' . $value . $linebreak;				
-		}	
-			
-		mkdir( $this->iniFileName, 0777, true );
+		}
+		
+		mkdir( substr( $this->iniFileName, 0, strrpos( $this->iniFileName, '/' ) ), 0777, true );
         if ( false === file_put_contents( $this->iniFileName, $content ) ) {
             throw new Exception(
                 sprintf(
@@ -63,7 +66,12 @@ class Cache {
 		return ( is_string( $optionName ) && isset( $this->options[$optionName] ) ? $this->options[$optionName] : '' );
 	}
 
-	public function changeVersion() {
+	public function set( $name, $value ) {
+		$this->options[$name] = $value;		
+		$this->save();
+	}
+
+	public function changeAssetsVersion() {
 		if( !isset( $this->options['version'] ) ) {
 			$this->options['version'] = 1;
 		}
@@ -75,6 +83,28 @@ class Cache {
 		}
 		
 		$this->save();
+	}
+
+	public function saveLoaderScript( $script ) {
+		mkdir( substr( $this->loaderFileName, 0, strrpos( $this->loaderFileName, '/' ) ), 0777, true );
+		
+		if( false === file_put_contents( $this->loaderFileName, $script ) && YII_ENV_DEV ) {
+            throw new Exception(
+                sprintf(
+                    'failed to open file `%s\' for writing.', $this->loaderFileName
+                )
+			);			
+		}
+		
+        return true;
+	}
+
+	public function getLoaderScript() {
+		if( file_exists( $this->loaderFileName ) ) {
+			return file_get_contents( $this->loaderFileName );
+		}
+
+		return false;		
 	}
 
 }

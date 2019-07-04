@@ -11,6 +11,7 @@ use Yii;
 use yii\base\BootstrapInterface;
 use yii\base\Application;
 use tubalmartin\CssMin\Minifier as CSSmin;
+use MatthiasMullie\Minify\JS as JSmin;
 use yii\console\Exception;
 use alexshul\optimizer\Cache as Cache;
 use alexshul\optimizer\AssetLoader as AssetLoader;
@@ -21,6 +22,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	public  $assetsClearStyles = false;
 	public  $assetsClearScripts = false;
 	public  $assetsAddLoader = false;
+	public  $assetsMinifyLoader = false;
 
 	private $cache = null;	
 	private $basePath = null;
@@ -80,7 +82,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 					if( false === file_put_contents( $dest, $out_buf) && YII_ENV_DEV ) {
 						throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
 					} else {
-						$this->cache->changeVersion();
+						$this->cache->changeAssetsVersion();
 					}								
 				}
 
@@ -104,7 +106,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 					if( false === file_put_contents( $dest, $out_buf) && YII_ENV_DEV ) {
 						throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
 					} else {
-						$this->cache->changeVersion();
+						$this->cache->changeAssetsVersion();
 					}				
 				}
 
@@ -116,18 +118,24 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	}
 
 	public function clearLinks() {
-        //var_dump( Yii::$app->getResponse()->data );
-		//exit;
-		
-		//Yii::$app->getResponse()->data = 'www';
+		//	Not released yet...
     }
 
-	public function addLoader() {
-		$loader = new AssetLoader( $this->assetsToWatch );
-		$loader->printTo( Yii::$app->response->data );		
-    }
+	public function addLoader() {		
+		$script = $this->cache->getLoaderScript();
 
-	
+		if( $script === false ) {
+			$loader = new AssetLoader( $this->assetsToWatch );			 
+			$script = $loader->generateScript();			
+
+			if( $this->assetsMinifyLoader )
+				$script = $this->minifyJS( $script );
+
+			$this->cache->saveLoaderScript( $script );
+		}
+
+		Yii::$app->response->data = str_replace( '</body>', "\r\n<script>\r\n" . $script . "\r\n</script>\r\n</body>", Yii::$app->response->data );				
+    }
 	
 	public function minifyCSS($files = array()) {
 		$input_css = NULL;
@@ -179,20 +187,24 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 		return $output_css;
 	}	
 
-	public function minifyJS($files = array()) {		
-		$minifier = new MatthiasMullie\Minify\JS;		
+	public function minifyJS( $input = array() ) {		
+		$minifier = new JSmin;		
 		
-		foreach ( $files as $file ) {
-			if( !file_exists( $file ) )
-				continue;
-				
-			$minifier->add($file);
-		}
+		if( is_array( $input ) ) {
+			foreach ( $input as $file ) {
+				if( !file_exists( $file ) )
+					continue;
+					
+				$minifier->add( $file );
+			}
+		} else {
+			$minifier->add( $input );
+		}		
 		
 		return $minifier->minify();
 	}
 
-	public function combineFiles($files = array()) {
+	public function combineFiles( $files = array() ) {
 		$buf = null;
 
 		foreach($files as $file) {			
@@ -202,7 +214,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 		return $buf;
 	}
 
-	public function getVersion() {
+	public function getAssetsVersion() {
 		return $this->cache->get( 'version' );
 	}
 }

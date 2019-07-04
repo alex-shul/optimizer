@@ -25,7 +25,6 @@ class AutoClear {
 
 	private function clearScripts( $data ) {
 		$output = '';
-		return $output;
-		
+		return $output;		
 	}
 }

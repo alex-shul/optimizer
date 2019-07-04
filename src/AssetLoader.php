@@ -15,7 +15,7 @@ class AssetLoader {
 		$this->assetsList = $assetsToWatch;
 	}
 
-	public function printTo( &$data ) {
+	public function generateScript( ) {
 		$script = <<< JS
 			window.addEventListener( 'load', function(){
 				function AssetManager() {
@@ -74,12 +74,16 @@ JS;
 JS;
 		$this->printAssetsTo( $script );
 		$script .= $script_end;
-		$data = str_replace( '</body>', "\r\n<script>\r\n" . $script . "\r\n</script>\r\n</body>", $data );
+
+		return $script;
 	}
 
 	private function printAssetsTo( &$script ) {			
 		foreach( $this->assetsList as $asset ) {
 			if( !isset( $asset['dest'] ) )
+				continue;
+
+			if( isset( $asset['autoload'] ) && !$asset['autoload'] )
 				continue;
 			
 			$tab = '				';
