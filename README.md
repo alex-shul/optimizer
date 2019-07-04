@@ -94,7 +94,8 @@ Extension has options:
               ],
               'dest' => 'web/assets/scripts.min.js', // (Required) Destination file for your asset.       
 	      'autoload' => false,                   // (Optional) If set to false - this asset will be not included to loader script.
-	      'type' => 'script'                       // (Optional) Name of tag element with link to asset, which loader script will attach to the page head. 
+	      'type' => 'script' ,                   // (Optional) Name of tag element with link to asset, which loader script will attach to the page head. 
+	      'condition' => 'typeof Promise !== \'function\'' // (Optional) Condition, which allows loader attach link with asset to the page head.
          ]                
             
 ```
