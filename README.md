@@ -2,7 +2,7 @@
 > **Help is welcome!** 
 The project is under development, so you can commit to the master branch. You can also write about errors found in "issues".
 
-Optimization tool for CSS &amp; JS files, created as Yii2 extension. Refactoring in progress...
+Tool for automatic assets optimization. Work with CSS &amp; JS files. This tool created as Yii2 extension. Refactoring in progress...
 
 ## Install
 
@@ -70,8 +70,15 @@ Optimization tool for CSS &amp; JS files, created as Yii2 extension. Refactoring
 ## Parameters
 
 Extension has options:
-- `assetsClearStyles` (bool)
-- `assetsClearScripts` (bool)
-- `assetsAddLoader` (bool)
-- `assetsToWatch` (bool)
+- `assetsClearStyles` {bool} (default: false)
+	(Not released yet) If true - clear on page all link tags with rel=stylesheet. It can be useful when all styles, that we need, added to autoloader.
+- `assetsClearScripts` {bool} (default: false)
+	(Not released yet) If true - clear on page all script tags with src attribute. It can be useful when all scripts, that we need, added to autoloader.
+- `assetsAddLoader` {bool} (default: false)
+	If true - generates and adds loader javascript to the page before closing body tag. Loader script creates queue with js & css files from option `assetsToWatch` ordered like it is in this option. When page will loaded - script will attach links to ther first css or js file from queue to the page head. When first asset will loaded or error will generated - script attach next asset from queue and so on...
+	>**Note**! Extension caches loader script in `@app/runtime` folder of app. So, you must delete cached script in `@app/runtime/alex-shul/yii2-optimizer/loader.js` when you change option `assetsToWatch`, that affect assets loading queue in loader script - then extension will generate new loader script.
+	
+- `assetsMinifyLoader` {bool} (default: false)
+	If true - minifies loader javascript before adding it to the page.
+- `assetsToWatch` {bool} (default: empty array)
 ...
