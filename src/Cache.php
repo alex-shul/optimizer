@@ -50,7 +50,10 @@ class Cache {
 			$content .= $key . ' = ' . $value . $linebreak;				
 		}
 		
-		mkdir( substr( $this->iniFileName, 0, strrpos( $this->iniFileName, '/' ) ), 0777, true );
+		$dir = substr( $this->iniFileName, 0, strrpos( $this->iniFileName, '/' ) );
+		if( !file_exists( $dir ) )
+			mkdir( $dir, 0777, true );
+
         if ( false === file_put_contents( $this->iniFileName, $content ) ) {
             throw new Exception(
                 sprintf(
@@ -86,7 +89,9 @@ class Cache {
 	}
 
 	public function saveLoaderScript( $script ) {
-		mkdir( substr( $this->loaderFileName, 0, strrpos( $this->loaderFileName, '/' ) ), 0777, true );
+		$dir = substr( $this->loaderFileName, 0, strrpos( $this->loaderFileName, '/' ) );
+		if( !file_exists( $dir ) )
+			mkdir( $dir, 0777, true );		
 		
 		if( false === file_put_contents( $this->loaderFileName, $script ) && YII_ENV_DEV ) {
             throw new Exception(

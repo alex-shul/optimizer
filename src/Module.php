@@ -26,10 +26,12 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 
 	private $cache = null;	
 	private $basePath = null;
+	private $webPath = null;
 
 	function __construct() {
 		$this->cache = new Cache;	
 		$this->basePath = Yii::getAlias('@app') . '/';	
+		$this->webPath = Yii::getAlias('@webroot') . '/';		
 	}	
 
 	public function bootstrap($app) {
@@ -60,7 +62,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 				continue;
 
 			$src = is_array( $bundle['src'] ) ? $bundle['src'] : array();
-			$dest = $this->basePath . $bundle['dest'];
+			$dest = $this->webPath . $bundle['dest'];
 			
 			//-----------------------------
 			//	Process CSS bundles
@@ -77,7 +79,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 					$css_latest = max( filemtime( $src[$key] ), $css_latest );
 				}						
 				
-				if( !file_exists( $dest ) || $css_latest > filemtime( $dest ) ) {
+				if( count( $src ) && ( !file_exists( $dest ) || $css_latest > filemtime( $dest ) ) ) {
 					$out_buf = $this->minifyCSS( $src );
 					if( false === file_put_contents( $dest, $out_buf) && YII_ENV_DEV ) {
 						throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
@@ -101,7 +103,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 					$js_latest = max( filemtime( $src[$key] ), $js_latest );
 				}						
 				
-				if( !file_exists( $dest ) || $js_latest > filemtime( $dest ) ) {
+				if( count( $src ) && ( !file_exists( $dest ) || $js_latest > filemtime( $dest ) ) ) {
 					$out_buf = $this->minifyJS( $src );
 					if( false === file_put_contents( $dest, $out_buf) && YII_ENV_DEV ) {
 						throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
