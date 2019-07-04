@@ -54,20 +54,20 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	}
 
 	public function checkSourceFiles() {
-		foreach( $this->assetsToWatch as $bundle ) {
+		foreach( $this->assetsToWatch as $asset ) {
 			//	Break if destination not set
 			//		OR
 			//	Break if external url given, i. e. "https://fonts.googleapis.com/css?family=..."
-			if( !isset( $bundle['dest'] ) || filter_var( $bundle['dest'], FILTER_VALIDATE_URL ) !== FALSE )
+			if( !isset( $asset['dest'] ) || filter_var( $asset['dest'], FILTER_VALIDATE_URL ) !== FALSE )
 				continue;
 
-			$src = is_array( $bundle['src'] ) ? $bundle['src'] : array();
-			$dest = $this->webPath . $bundle['dest'];
+			$src = is_array( $asset['src'] ) ? $asset['src'] : array();
+			$dest = $this->webPath . $asset['dest'];
 			
 			//-----------------------------
-			//	Process CSS bundles
+			//	Process CSS assets
 			//-----------------------------
-			if( strpos( $dest, '.css' ) !== FALSE || ( is_string( $bundle['type'] ) && $bundle['type'] === 'link' ) ) {
+			if( strpos( $dest, '.css' ) !== FALSE || ( is_string( $asset['type'] ) && $asset['type'] === 'link' ) ) {
 
 				$css_latest = 0;		
 				foreach( $src as $key => $path ) {
@@ -89,9 +89,9 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 				}
 
 			//-----------------------------
-			//	Process JS bundles
+			//	Process JS assets
 			//-----------------------------			
-			} else if( strpos( $dest, '.js' ) !== FALSE || ( is_string( $bundle['type'] ) && $bundle['type'] === 'script' ) ) {
+			} else if( strpos( $dest, '.js' ) !== FALSE || ( is_string( $asset['type'] ) && $asset['type'] === 'script' ) ) {
 
 				$js_latest = 0;		
 				foreach( $src as $key => $path ) {
