@@ -87,14 +87,23 @@ JS;
 				continue;
 			
 			$tab = '				';
-			$type = is_string( $asset['type'] ) ? ", '" . $asset['type'] . "'" : '';
+			$type = '';
+			//	If 'type' is set:
+			//		1) Push it into js 
+			//		2) Not set version due to errors with CDN links, for example:
+			//			"https://fonts.googleapis.com/css?family=Roboto"
+			if( is_string( $asset['type'] ) ) {
+				$type =  ", '" . $asset['type'] . "'";
+				$version = '';
+			} else
+				$version = '?v=' . $version;
 
 			if( is_string( $asset['condition'] ) ) {
 				$script .= "\r\n" . $tab . 'if( ' . $asset['condition'] . ' )';
 				$tab = '					';
 			}
 
-			$script .= "\r\n" . $tab . "m.enqueue('" . $asset['dest'] . "?v=" . $version . "'" . $type . ");";
+			$script .= "\r\n" . $tab . "m.enqueue('" . $asset['dest'] . $version . "'" . $type . ");";
 		}
 		$script .= "\r\n";	
 	}
