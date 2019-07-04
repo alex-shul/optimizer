@@ -79,7 +79,7 @@ Extension has options:
 - `assetsAddLoader` ***{bool}*** *(default: false)*
 
 	If true - generates and adds loader javascript to the page before closing body tag. Loader script creates queue with js & css files from option `assetsToWatch` ordered like it is in this option. When page will loaded - script will attach links to ther first css or js file from queue to the page head. When first asset will loaded or error will generated - script attach next asset from queue and so on...
-	>**Note**! Extension caches loader script in `@app/runtime` folder of app. So, you must delete cached script in `@app/runtime/alex-shul/yii2-optimizer/loader.js` when you make changes in option `assetsToWatch`, that affects assets loading queue in loader script - then extension will generate new loader script.
+	>**Note**! Extension caches loader script in `@app/runtime` folder of app. So, you must delete `@app/runtime/alex-shul/yii2-optimizer/loader.js` when you make changes in `assetsToWatch`, which affects assets loading queue in loader script -> then extension will generate new loader script.
 	
 - `assetsMinifyLoader` ***{bool}*** *(default: false)*
 
