@@ -70,15 +70,31 @@ Tool for automatic assets optimization. Work with CSS &amp; JS files. This tool 
 ## Parameters
 
 Extension has options:
-- `assetsClearStyles` {bool} (default: false)
+- `assetsClearStyles` ***{bool}*** *(default: false)*
+
 	(Not released yet) If true - clear on page all link tags with rel=stylesheet. It can be useful when all styles, that we need, added to autoloader.
-- `assetsClearScripts` {bool} (default: false)
+- `assetsClearScripts` ***{bool}*** *(default: false)*
+
 	(Not released yet) If true - clear on page all script tags with src attribute. It can be useful when all scripts, that we need, added to autoloader.
-- `assetsAddLoader` {bool} (default: false)
+- `assetsAddLoader` ***{bool}*** *(default: false)*
+
 	If true - generates and adds loader javascript to the page before closing body tag. Loader script creates queue with js & css files from option `assetsToWatch` ordered like it is in this option. When page will loaded - script will attach links to ther first css or js file from queue to the page head. When first asset will loaded or error will generated - script attach next asset from queue and so on...
-	>**Note**! Extension caches loader script in `@app/runtime` folder of app. So, you must delete cached script in `@app/runtime/alex-shul/yii2-optimizer/loader.js` when you change option `assetsToWatch`, that affect assets loading queue in loader script - then extension will generate new loader script.
+	>**Note**! Extension caches loader script in `@app/runtime` folder of app. So, you must delete cached script in `@app/runtime/alex-shul/yii2-optimizer/loader.js` when you make changes in option `assetsToWatch`, that affects assets loading queue in loader script - then extension will generate new loader script.
 	
-- `assetsMinifyLoader` {bool} (default: false)
+- `assetsMinifyLoader` ***{bool}*** *(default: false)*
+
 	If true - minifies loader javascript before adding it to the page.
-- `assetsToWatch` {bool} (default: empty array)
-...
+- `assetsToWatch` ***{array}*** *(default: empty array)*
+
+	Array with keys = "random semantic name for your asset", and values = "array with options". Example:
+```
+	'My scripts bundle' => [                    // Name of your asset
+             'src' => [
+              	'assets/js/common.js'               // (Optional) Source files to watch and combine+minify, if changed or never combined+minified before to dest file.                    
+              ],
+              'dest' => 'web/assets/scripts.min.js', // (Required) Destination file for your asset.       
+	      'autoload' => false,                   // (Optional) If set to false - this asset will be not included to loader script.
+	      'type' => 'script'                       // (Optional) Name of tag element with link to asset, which loader script will attach to the page head. 
+         ]                
+            
+```
