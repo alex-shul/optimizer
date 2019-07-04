@@ -128,7 +128,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 
 		if( $script === false ) {
 			$loader = new AssetLoader( $this->assetsToWatch );			 
-			$script = $loader->generateScript();			
+			$script = $loader->generateScript( $this->getAssetsVersion() );			
 
 			if( $this->assetsMinifyLoader )
 				$script = $this->minifyJS( $script );

@@ -15,7 +15,7 @@ class AssetLoader {
 		$this->assetsList = $assetsToWatch;
 	}
 
-	public function generateScript( ) {
+	public function generateScript( $version = 1 ) {
 		$script = <<< JS
 			window.addEventListener( 'load', function(){
 				function AssetManager() {
@@ -72,13 +72,13 @@ JS;
 		$script_end = <<< JS
 			});
 JS;
-		$this->printAssetsTo( $script );
+		$this->printAssetsTo( $script, $version );
 		$script .= $script_end;
 
 		return $script;
 	}
 
-	private function printAssetsTo( &$script ) {			
+	private function printAssetsTo( &$script, $version = 1 ) {			
 		foreach( $this->assetsList as $asset ) {
 			if( !isset( $asset['dest'] ) )
 				continue;
@@ -94,7 +94,7 @@ JS;
 				$tab = '					';
 			}
 
-			$script .= "\r\n" . $tab . "m.enqueue('" . $asset['dest'] . "'" . $type . ");";
+			$script .= "\r\n" . $tab . "m.enqueue('" . $asset['dest'] . "?v=" . $version . "'" . $type . ");";
 		}
 		$script .= "\r\n";	
 	}
