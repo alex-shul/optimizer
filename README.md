@@ -45,22 +45,22 @@ Tool for automatic assets optimization. Work with CSS &amp; JS files. This tool 
                         'assets/css/common.css',
                         'assets/css/media.css'
                     ],
-                    'dest' => 'web/assets/styles.min.css',
+                    'dest' => 'assets/styles.min.css',
 		    'autoload' => false
                 ],
                 'Promise fallback' => [ 
                     'condition' => 'typeof Promise !== \'function\'',          
-                    'dest' => 'web/assets/fallbacks/promise.min.js'                                 
+                    'dest' => 'assets/fallbacks/promise.min.js'                                 
                 ],
                 'fetch fallback' => [ 
                     'condition' => 'typeof fetch !== \'function\'',          
-                    'dest' => 'web/assets/fallbacks/fetch.umd.js'                                        
+                    'dest' => 'assets/fallbacks/fetch.umd.js'                                        
                 ],
                 'My scripts bundle' => [
                     'src' => [
                         'assets/js/common.js'                        
                     ],
-                    'dest' => 'web/assets/scripts.min.js'                  
+                    'dest' => 'assets/scripts.min.js'                  
                 ]                
             ],
         ],
