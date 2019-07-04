@@ -37,14 +37,16 @@ Optimization tool for CSS &amp; JS files, created as Yii2 extension. Refactoring
             'class' => 'alexshul\optimizer\Module',
             'assetsClearStyles' => false,
             'assetsClearScripts' => false,
-	          'assetsAddLoader' => true,
+	    'assetsAddLoader' => true,
+	    'assetsMinifyLoader' => true,
             'assetsToWatch' => [
-                'styles' => [
+                'My styles bundle' => [
                     'src' => [
                         'assets/css/common.css',
                         'assets/css/media.css'
                     ],
-                    'dest' => 'web/assets/styles.min.css'                    
+                    'dest' => 'web/assets/styles.min.css',
+		    'autoload' => false
                 ],
                 'Promise fallback' => [ 
                     'condition' => 'typeof Promise !== \'function\'',          
@@ -54,16 +56,12 @@ Optimization tool for CSS &amp; JS files, created as Yii2 extension. Refactoring
                     'condition' => 'typeof fetch !== \'function\'',          
                     'dest' => 'web/assets/fallbacks/fetch.umd.js'                                        
                 ],
-                'scripts' => [
+                'My scripts bundle' => [
                     'src' => [
                         'assets/js/common.js'                        
                     ],
                     'dest' => 'web/assets/scripts.min.js'                  
-                ],
-                'font' => [
-                    'dest' => 'https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz&display=swap&subset=cyrillic',
-                    'type' => 'link'
-                ]
+                ]                
             ],
         ],
     ],
