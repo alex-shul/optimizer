@@ -94,7 +94,7 @@ JS;
 			//			"https://fonts.googleapis.com/css?family=Roboto"
 			if( is_string( $asset['type'] ) ) {
 				$type =  ", '" . $asset['type'] . "'";
-				$version = '';
+				$version_print = '';
 			} else
 				$version_print = '?v=' . $version;
 
