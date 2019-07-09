@@ -96,14 +96,14 @@ JS;
 				$type =  ", '" . $asset['type'] . "'";
 				$version = '';
 			} else
-				$version = '?v=' . $version;
+				$version_print = '?v=' . $version;
 
 			if( is_string( $asset['condition'] ) ) {
 				$script .= "\r\n" . $tab . 'if( ' . $asset['condition'] . ' )';
 				$tab = '					';
 			}
 
-			$script .= "\r\n" . $tab . "m.enqueue('" . $asset['dest'] . $version . "'" . $type . ");";
+			$script .= "\r\n" . $tab . "m.enqueue('" . $asset['dest'] . $version_print . "'" . $type . ");";
 		}
 		$script .= "\r\n";	
 	}
