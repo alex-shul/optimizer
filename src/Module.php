@@ -11,7 +11,8 @@ use Yii;
 use yii\base\BootstrapInterface;
 use yii\base\Application;
 use tubalmartin\CssMin\Minifier as CSSmin;
-use MatthiasMullie\Minify\JS as JSmin;
+//use MatthiasMullie\Minify\JS as JSmin;
+use \JShrink\Minifier;
 use yii\console\Exception;
 use alexshul\optimizer\Cache as Cache;
 use alexshul\optimizer\AssetLoader as AssetLoader;
@@ -139,15 +140,16 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 		Yii::$app->response->data = str_replace( '</body>', "\r\n<script>\r\n" . $script . "\r\n</script>\r\n</body>", Yii::$app->response->data );				
     }
 	
-	public function minifyCSS($files = array()) {
-		$input_css = NULL;
-
-		foreach($files as $file) {
-			if( !file_exists( $file ) )
-				continue;
-
-			// Extract the CSS code you want to compress from your CSS files
-			$input_css .= file_get_contents($file);
+	public function minifyCSS( $input = array() ) {
+		$input_css = '';	
+		
+		if( is_array( $input ) ) {
+			$input_css = $this-> combineFiles( $input );			
+		} else if( is_string( $input ) ) {
+			$input_css = $input;
+		} else {
+			if( YII_ENV_DEV ) throw new Exception('yii2-optimizer::minifyCSS - invalid input format.');
+			return $input_css;
 		}
 
 		// Create a new CSSmin object.
@@ -190,20 +192,19 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	}	
 
 	public function minifyJS( $input = array() ) {		
-		$minifier = new JSmin;		
+		$data = '';		
 		
 		if( is_array( $input ) ) {
-			foreach ( $input as $file ) {
-				if( !file_exists( $file ) )
-					continue;
-					
-				$minifier->add( $file );
-			}
+			$data = $this-> combineFiles( $input );			
+		} else if( is_string( $input ) ) {
+			$data = $input;
 		} else {
-			$minifier->add( $input );
-		}		
+			if( YII_ENV_DEV ) throw new Exception('yii2-optimizer::minifyJS - invalid input format.');
+			return $data;
+		}
 		
-		return $minifier->minify();
+		// Disable YUI style comment preservation.		
+		return \JShrink\Minifier::minify($data, array('flaggedComments' => false));
 	}
 
 	public function combineFiles( $files = array() ) {

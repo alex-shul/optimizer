@@ -14,8 +14,8 @@
 	"require": {
 		"php": ">=5.3.1",
 		"yiisoft/yii2": "~2.0.0",
-		"tubalmartin/cssmin": "*",
-		"matthiasmullie/minify": "*"
+		"tubalmartin/cssmin": "*",		
+		"tedivm/jshrink": "~1.0"
 	},
 	"repositories": [
 		{
