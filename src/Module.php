@@ -10,10 +10,11 @@ namespace alexshul\optimizer;
 use Yii;
 use yii\base\BootstrapInterface;
 use yii\base\Application;
-use tubalmartin\CssMin\Minifier as CSSmin;
-//use MatthiasMullie\Minify\JS as JSmin;
-use \JShrink\Minifier;
+use yii\base\Event;
+use yii\web\View;
 use yii\console\Exception;
+use tubalmartin\CssMin\Minifier as CSSmin;
+use \JShrink\Minifier;
 use alexshul\optimizer\Cache as Cache;
 use alexshul\optimizer\AssetLoader as AssetLoader;
 
@@ -35,13 +36,10 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 		$this->webPath = Yii::getAlias('@webroot') . '/';		
 	}	
 
-	public function bootstrap($app) {
-		Yii::debug('Optimizer bootstrap!');
-        $app->on(Application::EVENT_AFTER_REQUEST, function () {	
-			Yii::debug('Optimizer after request!');		
-			$this->run();
-			Yii::debug('Optimizer finished!');		
-        });
+	public function bootstrap($app) {		
+		Event::on(View::className(), View::EVENT_BEGIN_PAGE, function ($event) {			
+			$this->run();				
+		});
 	}
 
 	protected function run () {
@@ -141,7 +139,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 			$this->cache->saveLoaderScript( $script );
 		}
 
-		Yii::$app->getView()->registerJs( $script, POS_END, 'loader' );
+		Yii::$app->getView()->registerJs( $script, View::POS_END, 'loader' );
 		//Yii::$app->response->data = str_replace( '</body>', "\r\n<script>\r\n" . $script . "\r\n</script>\r\n</body>", Yii::$app->response->data );				
     }
 	
