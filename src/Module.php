@@ -36,8 +36,11 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	}	
 
 	public function bootstrap($app) {
-        $app->on(Application::EVENT_AFTER_REQUEST, function () {			
-            $this->run();
+		Yii::debug('Optimizer bootstrap!');
+        $app->on(Application::EVENT_AFTER_REQUEST, function () {	
+			Yii::debug('Optimizer after request!');		
+			$this->run();
+			Yii::debug('Optimizer finished!');		
         });
 	}
 
@@ -52,6 +55,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 
 		if( $this->assetsAddLoader )
 			$this->addLoader();
+			Yii::debug($this->assetsAddLoader);
 	}
 
 	public function checkSourceFiles() {
@@ -126,7 +130,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 
 	public function addLoader() {		
 		$script = $this->cache->getLoaderScript();
-
+		Yii::debug($script);
 		if( $script === false ) {
 			$loader = new AssetLoader( $this->assetsToWatch );			 
 			$script = $loader->generateScript( $this->getAssetsVersion() );			
@@ -137,7 +141,8 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 			$this->cache->saveLoaderScript( $script );
 		}
 
-		Yii::$app->response->data = str_replace( '</body>', "\r\n<script>\r\n" . $script . "\r\n</script>\r\n</body>", Yii::$app->response->data );				
+		Yii::$app->getView()->registerJs( $script, POS_END, 'loader' );
+		//Yii::$app->response->data = str_replace( '</body>', "\r\n<script>\r\n" . $script . "\r\n</script>\r\n</body>", Yii::$app->response->data );				
     }
 	
 	public function minifyCSS( $input = array() ) {

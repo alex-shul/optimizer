@@ -27,8 +27,5 @@
 		"psr-4": {
 			"alexshul\\optimizer\\": "src/"
 		}
-	},
-	"extra": {
-        "bootstrap": "alexshul\\optimizer\\Module"
-    }
+	}	
 }
