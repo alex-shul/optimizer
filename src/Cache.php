@@ -86,6 +86,7 @@ class Cache {
 		}
 		
 		$this->save();
+		$this->clearLoaderScript();
 	}
 
 	public function saveLoaderScript( $script ) {
@@ -96,7 +97,7 @@ class Cache {
 		if( false === file_put_contents( $this->loaderFileName, $script ) && YII_ENV_DEV ) {
             throw new Exception(
                 sprintf(
-                    'failed to open file `%s\' for writing.', $this->loaderFileName
+                    'Failed to open file `%s\' for writing.', $this->loaderFileName
                 )
 			);			
 		}
@@ -110,6 +111,14 @@ class Cache {
 		}
 
 		return false;		
+	}
+
+	public function clearLoaderScript() {
+		if( file_exists( $this->loaderFileName ) ) {
+			return unlink( $this->loaderFileName );
+		}
+
+		return false;
 	}
 
 }
