@@ -29,6 +29,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	private $cache = null;	
 	private $basePath = null;
 	private $webPath = null;
+    private $jsonAssets = null;
 
 	function __construct() {
 		$this->cache = new Cache;	
@@ -57,6 +58,9 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	}
 
 	public function checkSourceFiles() {
+        $this->jsonAssets = new JsonAssetsInfo();
+        $this->jsonAssets->getAssetsInfo();
+        $fileChanged = false;
 		foreach( $this->assetsToWatch as $asset ) {
 			//	Break if destination not set
 			//		OR
@@ -74,7 +78,6 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 
 				$css_latest = 0;
                 $src = [];
-                $fileChanged = false;
 
 				foreach( $files as $key => $file ) {
                     $src[$key] = $this->basePath . $file['pathDirectory'] . $file['version'] . '/' . $file['fileName'];
@@ -83,8 +86,12 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 						continue;
 
                     $css_latest = max(filemtime($src[$key]), $css_latest);
-                    if ($css_latest > filemtime($dest))
-                        $fileChanged = true;
+                    // Пишет новые данные в массив
+                    $this->jsonAssets->addNewData($key, $file, $css_latest);
+                    if (!$fileChanged) {
+                        // Сверяет данные из json и конфига
+                        $fileChanged = $this->jsonAssets->checkDataAssets($key, $file, $css_latest);
+                    }
 				}						
 				
 				if( count( $src ) && ( !file_exists( $dest ) || $fileChanged ) ) {
@@ -103,7 +110,6 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 
 				$js_latest = 0;
                 $src = [];
-                $fileChanged = false;
 
 				foreach( $files as $key => $file ) {
                     $src[$key] = $this->basePath . $file['pathDirectory'] . $file['version'] . '/' . $file['fileName'];
@@ -112,8 +118,12 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 						continue;
 
 					$js_latest = max( filemtime( $src[$key] ), $js_latest );
-                    if ($js_latest > filemtime($dest))
-                        $fileChanged = true;
+                    // Пишет новые данные в массив
+                    $this->jsonAssets->addNewData($key, $file, $js_latest);
+                    if (!$fileChanged) {
+                        // Сверяет данные из json и конфига
+                        $fileChanged = $this->jsonAssets->checkDataAssets($key, $file, $js_latest);
+                    }
 				}						
 				
 				if( count( $src ) && ( !file_exists( $dest ) || $fileChanged ) ) {
@@ -130,6 +140,9 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 			}
 
 		}
+        if ($fileChanged) {
+            $this->jsonAssets->jsonAssetsUpdate();
+        }
 	}
 
 	public function clearLinks() {
