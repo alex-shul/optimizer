@@ -29,7 +29,11 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	private $cache = null;	
 	private $basePath = null;
 	private $webPath = null;
-    private $jsonAssets = null;
+	private $jsonAssets = null;
+	
+	const UNKNOWN = 0;
+	const LINK 	  = 1;
+	const SCRIPT  = 2;
 
 	function __construct() {
 		$this->cache = new Cache;	
@@ -59,92 +63,62 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 
 	public function checkSourceFiles() {
         $this->jsonAssets = new JsonAssetsInfo();
-        $this->jsonAssets->getAssetsInfo();
-        $fileChanged = false;
-		foreach( $this->assetsToWatch as $asset ) {
+        $this->jsonAssets->getAssetsInfo();		
+		
+		foreach( $this->assetsToWatch as $assetName => $asset ) {
 			//	Break if destination not set
 			//		OR
 			//	Break if external url given, i. e. "https://fonts.googleapis.com/css?family=..."
 			if( !isset( $asset['dest'] ) || filter_var( $asset['dest'], FILTER_VALIDATE_URL ) !== FALSE )
 				continue;
-
-            $files = is_array($asset['files']) ? $asset['files'] : array();
-			$dest = $this->webPath . $asset['dest'];
 			
-			//-----------------------------
-			//	Process CSS assets
-			//-----------------------------
-			if( strpos( $dest, '.css' ) !== FALSE || ( is_string( $asset['type'] ) && $asset['type'] === 'link' ) ) {
+			$src = is_array( $asset['src'] ) ? $asset['src'] : array();
+			$dest = $this->webPath . $asset['dest'];
+			$type = UNKNOWN;
 
-				$css_latest = 0;
-                $src = [];
+			if( strpos( $dest, '.css' ) !== FALSE || ( is_string( $asset['type'] ) && $asset['type'] === 'link' ) )
+				$type = LINK;
+			else if( strpos( $dest, '.js' ) !== FALSE || ( is_string( $asset['type'] ) && $asset['type'] === 'script' ) )
+				$type = SCRIPT;
 
-				foreach( $files as $key => $file ) {
-					$version = isset( $file['version'] ) ? $file['version'] . '/' : '';
-                    $src[$key] = $this->basePath . $file['pathDirectory'] . $version . $file['fileName'];
-
-					if( !file_exists( $src[$key] ) )
-						continue;
-
-                    $css_latest = max(filemtime($src[$key]), $css_latest);
-                    // Пишет новые данные в массив
-                    $this->jsonAssets->addNewData($key, $src[$key], $css_latest);
-                    if (!$fileChanged) {
-                        // Сверяет данные из json и конфига
-                        $fileChanged = $this->jsonAssets->checkDataAssets($key, $src[$key], $css_latest);
-                    }
-				}						
-				
-				if( count( $src ) && ( !file_exists( $dest ) || $fileChanged ) ) {
-					$out_buf = $this->minifyCSS( $src );
-					if( false === file_put_contents( $dest, $out_buf) && YII_ENV_DEV ) {
-						if( YII_ENV_DEV ) throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
-					} else {
-						$this->cache->changeAssetsVersion();
-					}								
-				}
-
-			//-----------------------------
-			//	Process JS assets
-			//-----------------------------			
-			} else if( strpos( $dest, '.js' ) !== FALSE || ( is_string( $asset['type'] ) && $asset['type'] === 'script' ) ) {
-
-				$js_latest = 0;
-                $src = [];
-
-				foreach( $files as $key => $file ) {
-                    $version = isset( $file['version'] ) ? $file['version'] . '/' : '';
-                    $src[$key] = $this->basePath . $file['pathDirectory'] . $version . $file['fileName'];
-
-					if( !file_exists( $src[$key] ) )
-						continue;
-
-					$js_latest = max( filemtime( $src[$key] ), $js_latest );
-                    // Пишет новые данные в массив
-                    $this->jsonAssets->addNewData($key, $file, $js_latest);
-                    if (!$fileChanged) {
-                        // Сверяет данные из json и конфига
-                        $fileChanged = $this->jsonAssets->checkDataAssets($key, $file, $js_latest);
-                    }
-				}						
-				
-				if( count( $src ) && ( !file_exists( $dest ) || $fileChanged ) ) {
-					$out_buf = $this->minifyJS( $src );
-					if( false === file_put_contents( $dest, $out_buf) && YII_ENV_DEV ) {
-						throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
-					} else {
-						$this->cache->changeAssetsVersion();
-					}				
-				}
-
-			} else if ( YII_ENV_DEV ) {
-				throw new Exception( 'alexshul/optimizer: unknow type of asset with destination "' . $dest . '"' );
+			if( $type === UNKNOWN ) {
+				if ( YII_ENV_DEV ) throw new Exception( 'alexshul/optimizer: unknow type of asset with destination "' . $dest . '"' );
+				continue;
 			}
 
-		}
-        if ($fileChanged) {
-            $this->jsonAssets->jsonAssetsUpdate();
-        }
+			$src_latest = 0;
+			$changes = false;		
+
+			foreach( $src as $key => $file ) {				
+				$src[$key] = $this->basePath . $file;
+
+				if( !file_exists( $src[$key] ) )
+					continue;
+
+				$src_latest = max(filemtime($src[$key]), $src_latest);
+				// Пишет новые данные в массив
+				$this->jsonAssets->addNewData( $assetName, $src[$key], $src_latest );
+
+				if (!$changes) {
+					// Сверяет данные из json и конфига
+					$changes = $this->jsonAssets->checkDataAssets($assetName, $src[$key], $src_latest);
+				}
+			}						
+			
+			if( count( $src ) && ( !file_exists( $dest ) || $changes ) ) {
+				$out_buf = $type === LINK ? $this->minifyCSS( $src ) : $this->minifyJS( $src );
+				
+				if( false === file_put_contents( $dest, $out_buf) && YII_ENV_DEV ) {
+					throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
+				} 
+
+				if( $changes ) {
+					$this->jsonAssets->changeAssetVersion();
+					$this->jsonAssets->jsonAssetsUpdate();
+					$this->cache->clearLoaderScript();
+				}							
+			}
+		}        
 	}
 
 	public function clearLinks() {
