@@ -15,7 +15,7 @@ class AssetLoader {
 		$this->assetsList = $assetsToWatch;
 	}
 
-	public function generateScript( $version = 1 ) {
+	public function generateScript() {
 		$script = <<< JS
 			window.addEventListener( 'load', function(){
 				function AssetManager() {
@@ -72,19 +72,22 @@ JS;
 		$script_end = <<< JS
 			});
 JS;
-		$this->printAssetsTo( $script, $version );
+		$this->printAssetsTo( $script );
 		$script .= $script_end;
 
 		return $script;
 	}
 
-	private function printAssetsTo( &$script, $version = 1 ) {			
+	private function printAssetsTo( &$script ) {			
 		foreach( $this->assetsList as $asset ) {
 			if( !isset( $asset['dest'] ) )
 				continue;
 
 			if( isset( $asset['autoload'] ) && !$asset['autoload'] )
 				continue;
+
+			if( !isset( $asset['version'] ) )
+				$asset['version'] = 1;			
 			
 			$tab = '				';
 			$type = '';
@@ -96,7 +99,7 @@ JS;
 				$type =  ", '" . $asset['type'] . "'";
 				$version_print = '';
 			} else
-				$version_print = '?v=' . $version;
+				$version_print = '?v=' . $asset['version'];
 
 			if( is_string( $asset['condition'] ) ) {
 				$script .= "\r\n" . $tab . 'if( ' . $asset['condition'] . ' )';

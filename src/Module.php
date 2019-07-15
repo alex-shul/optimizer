@@ -29,7 +29,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	private $cache = null;	
 	private $basePath = null;
 	private $webPath = null;
-	private $jsonAssets = null;
+	private $jsonData = null;
 	
 	const UNKNOWN = 0;
 	const LINK 	  = 1;
@@ -62,8 +62,8 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	}
 
 	public function checkSourceFiles() {
-        $this->jsonAssets = new JsonAssetsInfo();
-        $this->jsonAssets->getAssetsInfo();		
+        $this->jsonData = new JsonAssetsInfo();
+        $this->jsonData->loadAssetsInfo();		
 		
 		foreach( $this->assetsToWatch as $assetName => $asset ) {
 			//	Break if destination not set
@@ -97,11 +97,11 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 
 				$src_latest = max(filemtime($src[$key]), $src_latest);
 				// Пишет новые данные в массив
-				$this->jsonAssets->addNewData( $assetName, $src[$key], $src_latest );
+				$this->jsonData->addNewData( $assetName, $src[$key], $src_latest );
 
-				if (!$changes) {
+				if ( !$changes ) {
 					// Сверяет данные из json и конфига
-					$changes = $this->jsonAssets->checkDataAssets($assetName, $src[$key], $src_latest);
+					$changes = $this->jsonData->checkDataAssets($assetName, $src[$key], $src_latest);
 				}
 			}						
 			
@@ -110,15 +110,16 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 				
 				if( false === file_put_contents( $dest, $out_buf) && YII_ENV_DEV ) {
 					throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
-				} 
-
-				if( $changes ) {
-					$this->jsonAssets->changeAssetVersion();
-					$this->jsonAssets->jsonAssetsUpdate();
-					$this->cache->clearLoaderScript();
-				}							
+				}
+				
+				$this->jsonData->changeAssetVersion( $assetName );					
+				$this->cache->clearLoaderScript();											
 			}
-		}        
+
+			$this->assetsToWatch['version'] = $this->jsonData->getAssetVersion( $assetName );
+		}
+		
+		$this->jsonData->updateAssetsInfo();
 	}
 
 	public function clearLinks() {
@@ -130,7 +131,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 		//Yii::debug($script);
 		if( $script === false ) {
 			$loader = new AssetLoader( $this->assetsToWatch );			 
-			$script = $loader->generateScript( $this->getAssetsVersion() );			
+			$script = $loader->generateScript();			
 
 			if( $this->assetsMinifyLoader )
 				$script = $this->minifyJS( $script );
@@ -217,9 +218,5 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 		}
 
 		return $buf;
-	}
-
-	public function getAssetsVersion() {
-		return $this->cache->get( 'version' );
-	}
+	}	
 }
