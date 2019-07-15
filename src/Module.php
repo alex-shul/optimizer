@@ -80,24 +80,25 @@ class Module extends \yii\base\Module implements BootstrapInterface {
                 $src = [];
 
 				foreach( $files as $key => $file ) {
-                    $src[$key] = $this->basePath . $file['pathDirectory'] . $file['version'] . '/' . $file['fileName'];
+					$version = isset( $file['version'] ) ? $file['version'] . '/' : '';
+                    $src[$key] = $this->basePath . $file['pathDirectory'] . $version . $file['fileName'];
 
 					if( !file_exists( $src[$key] ) )
 						continue;
 
                     $css_latest = max(filemtime($src[$key]), $css_latest);
                     // Пишет новые данные в массив
-                    $this->jsonAssets->addNewData($key, $file, $css_latest);
+                    $this->jsonAssets->addNewData($key, $src[$key], $css_latest);
                     if (!$fileChanged) {
                         // Сверяет данные из json и конфига
-                        $fileChanged = $this->jsonAssets->checkDataAssets($key, $file, $css_latest);
+                        $fileChanged = $this->jsonAssets->checkDataAssets($key, $src[$key], $css_latest);
                     }
 				}						
 				
 				if( count( $src ) && ( !file_exists( $dest ) || $fileChanged ) ) {
 					$out_buf = $this->minifyCSS( $src );
 					if( false === file_put_contents( $dest, $out_buf) && YII_ENV_DEV ) {
-						throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
+						if( YII_ENV_DEV ) throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
 					} else {
 						$this->cache->changeAssetsVersion();
 					}								
@@ -112,7 +113,8 @@ class Module extends \yii\base\Module implements BootstrapInterface {
                 $src = [];
 
 				foreach( $files as $key => $file ) {
-                    $src[$key] = $this->basePath . $file['pathDirectory'] . $file['version'] . '/' . $file['fileName'];
+                    $version = isset( $file['version'] ) ? $file['version'] . '/' : '';
+                    $src[$key] = $this->basePath . $file['pathDirectory'] . $version . $file['fileName'];
 
 					if( !file_exists( $src[$key] ) )
 						continue;
@@ -151,7 +153,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 
 	public function addLoader() {		
 		$script = $this->cache->getLoaderScript();
-		Yii::debug($script);
+		//Yii::debug($script);
 		if( $script === false ) {
 			$loader = new AssetLoader( $this->assetsToWatch );			 
 			$script = $loader->generateScript( $this->getAssetsVersion() );			
