@@ -28,41 +28,62 @@ Tool for automatic assets optimization. Work with CSS &amp; JS files. This tool 
 
 ## Configure
 
-1) Open config file `basic/config/web.php` or `advanced/common/config/main.php`.
+1) Open config file `basic/config/web.php` or `advanced/frontend/config/main.php`.
 2) Add parameters for extension to the `components` section of config. Example:
 ```
+    'bootstrap' => [
+        ...
+        'optimizer'
+     ],
+    ...
     'components' => [
         ...
         'optimizer' => [
             'class' => 'alexshul\optimizer\Module',
             'assetsClearStyles' => false,
             'assetsClearScripts' => false,
-	    'assetsAddLoader' => true,
-	    'assetsMinifyLoader' => true,
-            'assetsToWatch' => [
-                'My styles bundle' => [
-                    'src' => [
-                        'assets/css/common.css',
-                        'assets/css/media.css'
+	        'assetsAddLoader' => true,
+	         'assetsMinifyLoader' => true,
+	         'assetsToWatch' => [
+	                'My styles bundle' => [
+	                        'condition' => false,
+                             'type' => 'link',
+                              'files' => [
+                                     'site' => [
+                                         'pathDirectory' => 'assets/data/css/site/',
+                                         'fileName' => 'site.css',
+                                         'version' => 'v1'
+                                     ],
+                              ],
+                              'dest' => 'assets/styles.min.css',
+                              'autoload' => false
+                     ],
+                    'Promise fallback' => [ 
+                                'condition' => 'typeof Promise !== \'function\'',          
+                                'dest' => 'assets/fallbacks/promise.min.js'                                 
                     ],
-                    'dest' => 'assets/styles.min.css',
-		    'autoload' => false
-                ],
-                'Promise fallback' => [ 
-                    'condition' => 'typeof Promise !== \'function\'',          
-                    'dest' => 'assets/fallbacks/promise.min.js'                                 
-                ],
-                'fetch fallback' => [ 
-                    'condition' => 'typeof fetch !== \'function\'',          
-                    'dest' => 'assets/fallbacks/fetch.umd.js'                                        
-                ],
-                'My scripts bundle' => [
-                    'src' => [
-                        'assets/js/common.js'                        
+                    'fetch fallback' => [ 
+                                'condition' => 'typeof fetch !== \'function\'',          
+                                'dest' => 'assets/fallbacks/fetch.umd.js'                                        
                     ],
-                    'dest' => 'assets/scripts.min.js'                  
-                ]                
-            ],
+                    'My scripts bundle' => [
+                                'condition' => false,
+                                 'type' => 'script',
+                                 'files' => [
+                                     'main' => [
+                                         'pathDirectory' => 'assets/data/js/main/',
+                                         'fileName' => 'main.js',
+                                         'version' => 'v2'
+                                     ],
+                                     'hello' => [
+                                         'pathDirectory' => 'assets/data/js/hello/',
+                                         'fileName' => 'hello.js',
+                                         'version' => 'v1'
+                                     ],
+                                 ],
+                                 'dest' => 'assets/scripts.min.js'
+                    ],
+             ],
         ],
     ],
 ```
@@ -86,16 +107,42 @@ Extension has options:
 	If true - minifies loader javascript before adding it to the page.
 - `assetsToWatch` ***{array}*** *(default: empty array)*
 
-	Array with keys = "random semantic name for your asset", and values = "array with options". Example:
+    Example directory structure:
 ```
-	'My scripts bundle' => [                    // Name of your asset
-             'src' => [
-              	'assets/js/common.js'               // (Optional) Source files to watch and combine+minify, if changed or never combined+minified before to dest file.                    
-              ],
-              'dest' => 'web/assets/scripts.min.js', // (Required) Destination file for your asset.       
-	      'autoload' => false,                   // (Optional) If set to false - this asset will be not included to loader script.
-	      'type' => 'script' ,                   // (Optional) Name of tag element with link to asset, which loader script will attach to the page head. 
-	      'condition' => 'typeof Promise !== \'function\'' // (Optional) Condition, which allows loader attach link with asset to the page head.
-         ]                
+     data          
+     ├─── css
+     │    └─── site
+     │         ├─── v1
+     │         │    └── site.css
+     │         └─── v2
+     │              └── site.css
+     └─── js
+          ├─── main
+          │    ├─── v1
+          │    │    └── main.js
+          │    └─── v2
+          │         └── main.js
+          └─── hello
+               ├─── v1
+               │    └── hello.js
+               └─── v2
+                    └── hello.js  
+```
+   Array with keys = "random semantic name for your asset", and values = "array with options". Example:
+```
+ 
+         'My styles bundle' => [                // Name of your asset
+                'condition' => false,               // Condition, which allows loader attach link with asset to the page head.
+                 'type' => 'link',                      // Name of tag element with link to asset, which loader script will attach to the page head. 
+                  'files' => [                              // Array of files for to watch and combine+minify
+                        'site' => [                         // File name asset
+                                'pathDirectory' => 'assets/data/css/site/',     //  Source path directory
+                                'fileName' => 'site.css',           // File name asset
+                                'version' => 'v1'                      // Version name
+                        ],
+                  ],
+                  'dest' => 'assets/styles.min.css',    // (Required) Destination file for your asset.    
+                  'autoload' => false                          // (Optional) If set to false - this asset will be not included to loader script.
+         ],               
             
 ```

@@ -64,7 +64,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 			if( !isset( $asset['dest'] ) || filter_var( $asset['dest'], FILTER_VALIDATE_URL ) !== FALSE )
 				continue;
 
-			$src = is_array( $asset['src'] ) ? $asset['src'] : array();
+            $files = is_array($asset['files']) ? $asset['files'] : array();
 			$dest = $this->webPath . $asset['dest'];
 			
 			//-----------------------------
@@ -72,17 +72,22 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 			//-----------------------------
 			if( strpos( $dest, '.css' ) !== FALSE || ( is_string( $asset['type'] ) && $asset['type'] === 'link' ) ) {
 
-				$css_latest = 0;		
-				foreach( $src as $key => $path ) {
-					$src[$key] = $this->basePath . $path;
+				$css_latest = 0;
+                $src = [];
+                $fileChanged = false;
+
+				foreach( $files as $key => $file ) {
+                    $src[$key] = $this->basePath . $file['pathDirectory'] . $file['version'] . '/' . $file['fileName'];
 
 					if( !file_exists( $src[$key] ) )
 						continue;
 
-					$css_latest = max( filemtime( $src[$key] ), $css_latest );
+                    $css_latest = max(filemtime($src[$key]), $css_latest);
+                    if ($css_latest > filemtime($dest))
+                        $fileChanged = true;
 				}						
 				
-				if( count( $src ) && ( !file_exists( $dest ) || $css_latest > filemtime( $dest ) ) ) {
+				if( count( $src ) && ( !file_exists( $dest ) || $fileChanged ) ) {
 					$out_buf = $this->minifyCSS( $src );
 					if( false === file_put_contents( $dest, $out_buf) && YII_ENV_DEV ) {
 						throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
@@ -96,17 +101,22 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 			//-----------------------------			
 			} else if( strpos( $dest, '.js' ) !== FALSE || ( is_string( $asset['type'] ) && $asset['type'] === 'script' ) ) {
 
-				$js_latest = 0;		
-				foreach( $src as $key => $path ) {
-					$src[$key] = $this->basePath . $path;
+				$js_latest = 0;
+                $src = [];
+                $fileChanged = false;
+
+				foreach( $files as $key => $file ) {
+                    $src[$key] = $this->basePath . $file['pathDirectory'] . $file['version'] . '/' . $file['fileName'];
 
 					if( !file_exists( $src[$key] ) )
 						continue;
 
 					$js_latest = max( filemtime( $src[$key] ), $js_latest );
+                    if ($js_latest > filemtime($dest))
+                        $fileChanged = true;
 				}						
 				
-				if( count( $src ) && ( !file_exists( $dest ) || $js_latest > filemtime( $dest ) ) ) {
+				if( count( $src ) && ( !file_exists( $dest ) || $fileChanged ) ) {
 					$out_buf = $this->minifyJS( $src );
 					if( false === file_put_contents( $dest, $out_buf) && YII_ENV_DEV ) {
 						throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
