@@ -18,14 +18,17 @@ class JsonAssetsInfo
     /**
      *  Создает массив с данными из assets-info.json, если файл существует
      *  Данные пишет в $this->oldDataArray
+     * @param $cache Cache
      */
-    public function loadAssetsInfo ()
+    public function loadAssetsInfo ($cache)
     {
         if ( file_exists( $this->jsonFileName ) ) {
             $assetsInfo = file_get_contents( $this->jsonFileName );
             //Yii::debug($assetsInfo);
             $this->oldDataArray = json_decode( $assetsInfo, true );
-        }     
+        } else {
+            $cache->save();
+        }
     }
 
     /**
@@ -131,10 +134,11 @@ class JsonAssetsInfo
             $this->newDataArray[$nameAsset]['version'] = array_key_exists( 'version', $this->oldDataArray[$nameAsset] ) ? $this->oldDataArray[$nameAsset]['version'] : 1;
         }
     }
-    
-    /** 
+
+    /**
      * Вычисляет и возвращает текущую версию ассета
      * @param $nameAsset
+     * @return int|mixed
      */
     public function getAssetVersion( $nameAsset ) { 
         $version = 1;       

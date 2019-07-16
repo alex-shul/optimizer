@@ -63,7 +63,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 
 	public function checkSourceFiles() {
         $this->jsonData = new JsonAssetsInfo();
-        $this->jsonData->loadAssetsInfo();		
+        $this->jsonData->loadAssetsInfo($this->cache);
 		
 		foreach( $this->assetsToWatch as $assetName => $asset ) {
 			//	Break if destination not set
@@ -74,14 +74,14 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 			
 			$src = is_array( $asset['src'] ) ? $asset['src'] : array();
 			$dest = $this->webPath . $asset['dest'];
-			$type = UNKNOWN;
+			$type = self::UNKNOWN;
 
 			if( strpos( $dest, '.css' ) !== FALSE || ( is_string( $asset['type'] ) && $asset['type'] === 'link' ) )
-				$type = LINK;
+				$type = self::LINK;
 			else if( strpos( $dest, '.js' ) !== FALSE || ( is_string( $asset['type'] ) && $asset['type'] === 'script' ) )
-				$type = SCRIPT;
+				$type = self::SCRIPT;
 
-			if( $type === UNKNOWN ) {
+			if( $type === self::UNKNOWN ) {
 				if ( YII_ENV_DEV ) throw new Exception( 'alexshul/optimizer: unknow type of asset with destination "' . $dest . '"' );
 				continue;
 			}
@@ -109,7 +109,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 			
 			if( count( $src ) && ( !file_exists( $dest ) || $changes_src ) ) {
 				Yii::debug('Minifying '.$assetName.'...');
-				$out_buf = $type === LINK ? $this->minifyCSS( $src ) : $this->minifyJS( $src );
+				$out_buf = $type === self::LINK ? $this->minifyCSS( $src ) : $this->minifyJS( $src );
 				
 				if( false === file_put_contents( $dest, $out_buf) && YII_ENV_DEV ) {
 					throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
