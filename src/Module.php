@@ -17,6 +17,7 @@ use tubalmartin\CssMin\Minifier as CSSmin;
 use \JShrink\Minifier;
 use alexshul\optimizer\Cache as Cache;
 use alexshul\optimizer\AssetLoader as AssetLoader;
+use alexshul\optimizer\AssetIterator as AssetIterator;
 
 class Module extends \yii\base\Module implements BootstrapInterface {
 
@@ -51,6 +52,11 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	protected function run () {
 		if( !is_dir($this->basePath) )
 			return false;
+
+		$assets = new AssetIterator( $this->assetsToWatch );
+		foreach( $assets as $asset ) {
+			Yii::debug( print_r( $assets->current() ) . '<br>' );
+		}
 
 		$this->checkForChanges();
 
