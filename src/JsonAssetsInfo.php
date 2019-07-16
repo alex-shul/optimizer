@@ -23,6 +23,7 @@ class JsonAssetsInfo
     {
         if ( file_exists( $this->jsonFileName ) ) {
             $assetsInfo = file_get_contents( $this->jsonFileName );
+            Yii::debug($assetsInfo);
             $this->arrayAssets = json_decode( $assetsInfo, true );
         }     
     }
@@ -32,7 +33,7 @@ class JsonAssetsInfo
      */
     public function updateAssetsInfo ()
     {
-        if( empty($this->newDataArray) )
+        if( empty( $this->newDataArray ) )
             return;
         
         if( !$this->unsavedChanges )
@@ -40,6 +41,7 @@ class JsonAssetsInfo
             
         $json = json_encode( $this->newDataArray );
         file_put_contents( $this->jsonFileName, $json );
+        Yii::debug($json);
     }
 
     /** 
@@ -51,16 +53,16 @@ class JsonAssetsInfo
      */
     public function checkDataAssets($nameAsset, $file, $latest)
     {
+        //Yii::debug(print_r($this->arrayAssets,true));
         if ( !array_key_exists( $nameAsset, $this->arrayAssets ) ||
              !array_key_exists( 'src', $this->arrayAssets[$nameAsset] ) ||
-             !array_key_exists( $file, $this->arrayAssets[$nameAsset]['src'] ) ||
-             $this->arrayAssets[$nameAsset]['path'] != $file ||
-             $this->arrayAssets[$nameAsset]['latest'] != $latest ) {
-
+             !array_key_exists( $file, $this->arrayAssets[$nameAsset]['src'] ) ||              
+              $this->arrayAssets[$nameAsset]['src'][$file]['latest'] != $latest ) {
+                Yii::debug('Asset name: ' . $nameAsset . ' File: ' . $file . ' Latest: ' . $latest);
             $this->unsavedChanges = true;
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }    
 
     /** 
