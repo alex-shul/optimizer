@@ -23,7 +23,7 @@ class JsonAssetsInfo
     {
         if ( file_exists( $this->jsonFileName ) ) {
             $assetsInfo = file_get_contents( $this->jsonFileName );
-            Yii::debug($assetsInfo);
+            //Yii::debug($assetsInfo);
             $this->oldDataArray = json_decode( $assetsInfo, true );
         }     
     }
@@ -39,7 +39,7 @@ class JsonAssetsInfo
         if( !$this->unsavedChanges )
             return;
 
-        Yii::debug('Save assets json data. Data: '.print_r($this->newDataArray,true));
+        //Yii::debug('Save assets json data. Data: '.print_r($this->newDataArray,true));
             
         $json = json_encode( $this->newDataArray );
         file_put_contents( $this->jsonFileName, $json );
@@ -61,7 +61,7 @@ class JsonAssetsInfo
              !array_key_exists( $file, $this->oldDataArray[$nameAsset]['src'] ) ||            
              $this->oldDataArray[$nameAsset]['src'][$file]['latest'] != $latest) {
 
-            Yii::debug('checkAssetSrcData() Asset name: ' . $nameAsset . ' File: ' . $file . ' Latest: ' . $latest);
+            //Yii::debug('checkAssetSrcData() Asset name: ' . $nameAsset . ' File: ' . $file . ' Latest: ' . $latest);
             $this->unsavedChanges = true;
             return true;
         }
@@ -83,7 +83,7 @@ class JsonAssetsInfo
              !array_key_exists( $file, $this->oldDataArray[$nameAsset]['dest'] ) ||
              $this->oldDataArray[$nameAsset]['dest'][$file]['latest'] != $latest) {
 
-            Yii::debug('checkAssetDestData() Asset name: ' . $nameAsset . ' File: ' . $file . ' Latest old: ' . $this->oldDataArray[$nameAsset]['dest'][$file]['latest'] . 'Latest new: ' . $latest);
+            //Yii::debug('checkAssetDestData() Asset name: ' . $nameAsset . ' File: ' . $file . ' Latest old: ' . $this->oldDataArray[$nameAsset]['dest'][$file]['latest'] . 'Latest new: ' . $latest);
             $this->unsavedChanges = true;
             return true;
         }
@@ -133,7 +133,7 @@ class JsonAssetsInfo
     }
     
     /** 
-     * Меняет версию для ассета
+     * Вычисляет и возвращает текущую версию ассета
      * @param $nameAsset
      */
     public function getAssetVersion( $nameAsset ) { 
@@ -142,16 +142,16 @@ class JsonAssetsInfo
         if ( array_key_exists( $nameAsset, $this->newDataArray ) &&
              array_key_exists( 'version', $this->newDataArray[$nameAsset] ) ) {         
             $version = $this->newDataArray[$nameAsset]['version'];
-            Yii::debug('getAssetVersion ('.$nameAsset.') -> new');
+            //Yii::debug('getAssetVersion ('.$nameAsset.') -> new');
 
             if ( array_key_exists( $nameAsset, $this->oldDataArray ) &&
                 array_key_exists( 'version', $this->oldDataArray[$nameAsset] ) ) {         
                 $version = max( $this->oldDataArray[$nameAsset]['version'], $this->newDataArray[$nameAsset]['version'] );
-                Yii::debug('getAssetVersion('.$nameAsset.') -> max old: '.$this->oldDataArray[$nameAsset]['version'].' new: '.$this->newDataArray[$nameAsset]['version']);
+                //Yii::debug('getAssetVersion('.$nameAsset.') -> max old: '.$this->oldDataArray[$nameAsset]['version'].' new: '.$this->newDataArray[$nameAsset]['version']);
             }
         }
 
-        Yii::debug('getAssetVersion('.$nameAsset.') -> return '.$version);
+        //Yii::debug('getAssetVersion('.$nameAsset.') -> return '.$version);
         return $version;
 	}
     
@@ -160,7 +160,7 @@ class JsonAssetsInfo
      * @param $nameAsset
      */
     public function changeAssetVersion( $nameAsset ) { 
-        Yii::debug('changeAssetVersion for '.$nameAsset);
+        //Yii::debug('changeAssetVersion for '.$nameAsset);
         $this->unsavedChanges = true;
 
         if ( !array_key_exists( $nameAsset, $this->newDataArray ) ) {
@@ -179,6 +179,6 @@ class JsonAssetsInfo
 			$this->newDataArray[$nameAsset]['version'] = 1;
         }	
         
-        Yii::debug('Data: '.print_r($this->newDataArray,true));        
+        //Yii::debug('Data: '.print_r($this->newDataArray,true));        
 	}
 }
