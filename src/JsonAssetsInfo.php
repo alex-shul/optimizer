@@ -9,6 +9,7 @@ class JsonAssetsInfo
     private $jsonFileName = '';
     private $oldDataArray = [];
     private $newDataArray = [];
+    private $configFileMTime = 0;
     private $unsavedChanges = false;
 
     function __construct() {
@@ -20,14 +21,23 @@ class JsonAssetsInfo
      *  Данные пишет в $this->oldDataArray
      * @param $cache Cache
      */
-    public function loadAssetsInfo ($cache)
+    public function loadAssetsInfo( $cache )
     {
-        if ( file_exists( $this->jsonFileName ) ) {
-            $assetsInfo = file_get_contents( $this->jsonFileName );
-            //Yii::debug($assetsInfo);
-            $this->oldDataArray = json_decode( $assetsInfo, true );
+        if( file_exists( $this->jsonFileName ) ) {
+            $data = json_decode( file_get_contents( $this->jsonFileName ), true );
+            //Yii::debug($data);
+
+            if( $data !== NULL ) {
+                if( array_key_exists( 'assets', $data ) ) {
+                    $this->oldDataArray = $data['assets'];
+                }
+                if( array_key_exists( 'configFileMTime', $data ) ) {
+                    $this->configFileMTime = $data['configFileMTime'];
+                }
+            } elseif( YII_ENV_DEV ) throw new Exception( 'alexshul/optimizer: corrupted json data in file "' . $this->jsonFileName . '".' );
         } else {
-            $cache->save();
+            $cache->validateFilePath( $this->jsonFileName );
+            $this->unsavedChanges = true;
         }
     }
 
@@ -35,18 +45,30 @@ class JsonAssetsInfo
      * Обновляет файл assets-info.json данными из сформированного массива
      */
     public function updateAssetsInfo()
-    {
-        if( empty( $this->newDataArray ) )
-            return;
-        
+    {        
         if( !$this->unsavedChanges )
             return;
 
-        //Yii::debug('Save assets json data. Data: '.print_r($this->newDataArray,true));
-            
-        $json = json_encode( $this->newDataArray );
+        //Yii::debug('Save assets json data. Data: '.print_r($this->newDataArray,true));            
+        $json = json_encode( array( 
+            'assets' => $this->newDataArray,
+            'configFileMTime' => $this->configFileMTime ) );
         file_put_contents( $this->jsonFileName, $json );
         //Yii::debug($json);
+    }
+
+    /** 
+     * Сверяет данные полученные из json и текущий файл     
+     * @param $file
+     * @return bool
+     */
+    public function checkConfigFile( $file ) {
+        $now = file_exists( $file ) ? filemtime( $file ) : 0;
+        if( $now > $this->configFileMTime ) {
+            $this->configFileMTime = $now;
+            return true;
+        }
+        return false;
     }
 
     /** 

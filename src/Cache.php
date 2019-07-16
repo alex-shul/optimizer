@@ -42,6 +42,13 @@ class Cache {
 		return true;
 	}
 
+	public function validateFilePath( $file ) {
+		$dir = substr( $file, 0, strrpos( $file, '/' ) );
+		if( !file_exists( $dir ) )
+			return mkdir( $dir, 0777, true );
+		return true;
+	}
+
 	public function save() {
 		$content = '';        
 		$linebreak = "\r\n";
@@ -50,16 +57,14 @@ class Cache {
 			$content .= $key . ' = ' . $value . $linebreak;				
 		}
 		
-		$dir = substr( $this->iniFileName, 0, strrpos( $this->iniFileName, '/' ) );
-		if( !file_exists( $dir ) )
-			mkdir( $dir, 0777, true );
+		if( false === $this->validateFilePath( $this->iniFileName ) ) {
+			if( YII_ENV_DEV ) throw new Exception( 'can\'t validate dir for file "'.$this->iniFileName.'".' );
+			return false;
+		}
 
         if ( false === file_put_contents( $this->iniFileName, $content ) ) {
-            throw new Exception(
-                sprintf(
-                    'failed to open file `%s\' for writing.', $this->iniFileName
-                )
-			);			
+			if( YII_ENV_DEV ) throw new Exception( 'failed to open file "'.$this->iniFileName.'" for writing.' );
+			return false;			
 		}
 		
         return true;

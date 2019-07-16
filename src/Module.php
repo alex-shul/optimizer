@@ -20,6 +20,7 @@ use alexshul\optimizer\AssetLoader as AssetLoader;
 
 class Module extends \yii\base\Module implements BootstrapInterface {
 
+	public  $assetsConfigFile = '';
 	public  $assetsToWatch = array();
 	public  $assetsClearStyles = false;
 	public  $assetsClearScripts = false;
@@ -51,7 +52,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 		if( !is_dir($this->basePath) )
 			return false;
 
-		$this->checkSourceFiles();
+		$this->checkForChanges();
 
 		if( $this->assetsClearStyles || $this->assetsClearScripts )
 			$this->clearLinks();
@@ -61,9 +62,10 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 			//Yii::debug($this->assetsAddLoader);
 	}
 
-	public function checkSourceFiles() {
+	public function checkForChanges() {
         $this->jsonData = new JsonAssetsInfo();
-        $this->jsonData->loadAssetsInfo($this->cache);
+		$this->jsonData->loadAssetsInfo( $this->cache );
+		$changes_cfg = $this->jsonData->checkConfigFile( $this->assetsConfigFile );
 		
 		foreach( $this->assetsToWatch as $assetName => $asset ) {
 			//	Break if destination not set
@@ -113,18 +115,20 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 				
 				if( false === file_put_contents( $dest, $out_buf) && YII_ENV_DEV ) {
 					throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
-				}
-				
-															
+				}											
 			}
 
-			if( $changes_src || $changes_dest ) {
-				$this->jsonData->changeAssetVersion( $assetName );					
-				$this->cache->clearLoaderScript();
+			if(  $changes_src || $changes_dest ) {
+				$this->jsonData->changeAssetVersion( $assetName );
+				$changes_cfg = true;
 			}
 
 			$this->jsonData->addNewDestData( $assetName, $dest, file_exists( $dest ) ? filemtime( $dest ) : 0 );
 			$this->assetsToWatch[$assetName]['version'] = $this->jsonData->getAssetVersion( $assetName );
+		}
+
+		if( $changes_cfg ) {
+			$this->cache->clearLoaderScript();
 		}
 		
 		$this->jsonData->updateAssetsInfo();
@@ -221,8 +225,15 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	public function combineFiles( $files = array() ) {
 		$buf = null;
 
-		foreach($files as $file) {			
-			$buf .= file_get_contents($file);
+		foreach($files as $file) {
+			try {
+				$data = file_get_contents($file);
+			} catch( Exception $e ) {
+				if( YII_ENV_DEV ) throw $e;
+				continue;
+			}
+			
+			$buf .= $data;
 		}
 
 		return $buf;
