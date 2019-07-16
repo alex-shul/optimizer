@@ -58,7 +58,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 
 		if( $this->assetsAddLoader )
 			$this->addLoader();
-			Yii::debug($this->assetsAddLoader);
+			//Yii::debug($this->assetsAddLoader);
 	}
 
 	public function checkSourceFiles() {
@@ -87,7 +87,9 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 			}
 
 			$src_latest = 0;
-			$changes = false;		
+			$dest_latest = file_exists( $dest ) ? filemtime( $dest ) : 0;			
+			$changes_dest = $this->jsonData->checkAssetDestData($assetName, $dest, $dest_latest);
+			$changes_src = false;
 
 			foreach( $src as $key => $file ) {				
 				$src[$key] = $this->basePath . $file;
@@ -97,26 +99,32 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 
 				$src_latest = max(filemtime($src[$key]), $src_latest);
 				// Пишет новые данные в массив
-				$this->jsonData->addNewData( $assetName, $src[$key], $src_latest );
+				$this->jsonData->addNewSrcData( $assetName, $src[$key], $src_latest );
 
-				if ( !$changes ) {
+				if ( !$changes_src && !$changes_dest ) {
 					// Сверяет данные из json и конфига
-					$changes = $this->jsonData->checkDataAssets($assetName, $src[$key], $src_latest);
+					$changes_src = $this->jsonData->checkAssetSrcData($assetName, $src[$key], $src_latest);
 				}
 			}						
 			
-			if( count( $src ) && ( !file_exists( $dest ) || $changes ) ) {
+			if( count( $src ) && ( !file_exists( $dest ) || $changes_src ) ) {
+				Yii::debug('Minifying '.$assetName.'...');
 				$out_buf = $type === LINK ? $this->minifyCSS( $src ) : $this->minifyJS( $src );
 				
 				if( false === file_put_contents( $dest, $out_buf) && YII_ENV_DEV ) {
 					throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
 				}
 				
-				$this->jsonData->changeAssetVersion( $assetName );					
-				$this->cache->clearLoaderScript();											
+															
 			}
 
-			$this->assetsToWatch['version'] = $this->jsonData->getAssetVersion( $assetName );
+			if( $changes_src || $changes_dest ) {
+				$this->jsonData->changeAssetVersion( $assetName );					
+				$this->cache->clearLoaderScript();
+			}
+
+			$this->jsonData->addNewDestData( $assetName, $dest, file_exists( $dest ) ? filemtime( $dest ) : 0 );
+			$this->assetsToWatch[$assetName]['version'] = $this->jsonData->getAssetVersion( $assetName );
 		}
 		
 		$this->jsonData->updateAssetsInfo();

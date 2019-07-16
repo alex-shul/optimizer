@@ -74,21 +74,6 @@ class Cache {
 		$this->save();
 	}
 
-	public function changeAssetsVersion() {
-		if( !isset( $this->options['version'] ) ) {
-			$this->options['version'] = 1;
-		}
-
-		$this->options['version']++;
-
-		if( $this->options['version'] > 999998 ) {
-			$this->options['version'] = 1;
-		}
-		
-		$this->save();
-		$this->clearLoaderScript();
-	}
-
 	public function saveLoaderScript( $script ) {
 		$dir = substr( $this->loaderFileName, 0, strrpos( $this->loaderFileName, '/' ) );
 		if( !file_exists( $dir ) )
