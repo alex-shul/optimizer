@@ -9,12 +9,11 @@ class AssetIterator implements \Iterator {
 
     const UNKNOWN = 0;
 	const LINK 	  = 1;
-	const SCRIPT  = 2;
-    	
+	const SCRIPT  = 2;    	
 
 
     /**
-     *  Resets position
+     *  Construct with given data array
      */
     public function __construct( array $assetsToWatch = [] ) {
         foreach( $assetsToWatch as $assetName => $assetOptions ) {
