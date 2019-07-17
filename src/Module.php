@@ -44,21 +44,18 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	}	
 
 	public function bootstrap($app) {		
-		Event::on(View::className(), View::EVENT_BEGIN_PAGE, function ($event) {			
-			$this->run();				
+		Event::on(View::className(), View::EVENT_BEGIN_PAGE, function ( $event ) {				
+			$this->run( $event->sender );				
 		});
 	}
 
-	protected function run () {
+	protected function run( \yii\web\View &$view ) {
 		if( !is_dir($this->basePath) )
 			return false;
 
-		$assets = new AssetIterator( $this->assetsToWatch );
-		foreach( $assets as $asset ) {
-			Yii::debug( print_r( $assets->current() ) . '<br>' );
-		}
+		$asset = new AssetIterator( $this->assetsToWatch );		
 
-		$this->checkForChanges();
+		$this->checkForChanges( $asset, $view );
 
 		if( $this->assetsClearStyles || $this->assetsClearScripts )
 			$this->clearLinks();
@@ -68,69 +65,59 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 			//Yii::debug($this->assetsAddLoader);
 	}
 
-	public function checkForChanges() {
+	public function checkForChanges( AssetIterator &$asset, \yii\web\View &$view ) {
         $this->jsonData = new JsonAssetsInfo();
 		$this->jsonData->loadAssetsInfo( $this->cache );
-		$changes_cfg = $this->jsonData->checkConfigFile( $this->assetsConfigFile );
-		
-		foreach( $this->assetsToWatch as $assetName => $asset ) {
-			//	Break if destination not set
-			//		OR
-			//	Break if external url given, i. e. "https://fonts.googleapis.com/css?family=..."
-			if( !isset( $asset['dest'] ) || filter_var( $asset['dest'], FILTER_VALIDATE_URL ) !== FALSE )
+		$changes_cfg = $this->jsonData->checkConfigFile( $this->assetsConfigFile );	
+
+		foreach( $asset as $assetOptions ) {
+			if( !$asset->hasDest() || $asset->fromCDN() )
 				continue;
 			
-			$src = is_array( $asset['src'] ) ? $asset['src'] : array();
-			$dest = $this->webPath . $asset['dest'];
-			$type = self::UNKNOWN;
+			$dest = $asset->extendDest( $this->webPath );
+			$destMTime = file_exists( $dest ) ? filemtime( $dest ) : 0;
 
-			if( strpos( $dest, '.css' ) !== FALSE || ( is_string( $asset['type'] ) && $asset['type'] === 'link' ) )
-				$type = self::LINK;
-			else if( strpos( $dest, '.js' ) !== FALSE || ( is_string( $asset['type'] ) && $asset['type'] === 'script' ) )
-				$type = self::SCRIPT;
-
-			if( $type === self::UNKNOWN ) {
-				if ( YII_ENV_DEV ) throw new Exception( 'alexshul/optimizer: unknow type of asset with destination "' . $dest . '"' );
-				continue;
-			}
+			$changes_src = false;
+			$changes_dest = $this->jsonData->checkAssetDestData( $asset->name(), $dest, $destMTime );
 
 			$src_latest = 0;
-			$dest_latest = file_exists( $dest ) ? filemtime( $dest ) : 0;			
-			$changes_dest = $this->jsonData->checkAssetDestData($assetName, $dest, $dest_latest);
-			$changes_src = false;
+			foreach( $asset->src() as &$srcFile ) {
+				$srcFile = $this->basePath . $srcFile;
 
-			foreach( $src as $key => $file ) {				
-				$src[$key] = $this->basePath . $file;
-
-				if( !file_exists( $src[$key] ) )
+				if( !file_exists( $srcFile ) )
 					continue;
-
-				$src_latest = max(filemtime($src[$key]), $src_latest);
+				
 				// Пишет новые данные в массив
-				$this->jsonData->addNewSrcData( $assetName, $src[$key], $src_latest );
+				$srcMTime = filemtime( $srcFile );
+				$this->jsonData->addNewSrcData( $asset->name(), $srcFile, $srcMTime );
+
+				$src_latest = max( $srcMTime, $src_latest );
 
 				if ( !$changes_src && !$changes_dest ) {
 					// Сверяет данные из json и конфига
-					$changes_src = $this->jsonData->checkAssetSrcData($assetName, $src[$key], $src_latest);
+					$changes_src = $this->jsonData->checkAssetSrcData( $asset->name(), $srcFile, $srcMTime );
 				}
-			}						
-			
-			if( count( $src ) && ( !file_exists( $dest ) || $changes_src ) ) {
-				Yii::debug('Minifying '.$assetName.'...');
-				$out_buf = $type === self::LINK ? $this->minifyCSS( $src ) : $this->minifyJS( $src );
+			}
+			$changes_src = $this->jsonData->checkAssetSrcCountData( $asset->name() );
+
+			if( $asset->hasSrc() && ( !file_exists( $dest ) || $changes_src ) ) {
+				Yii::debug( 'Minifying ' . $asset->name() . '...' );
+				$data = $asset->isScript() ? $this->minifyJS( $asset->src() ) :  $this->minifyCSS( $asset->src() );
 				
-				if( false === file_put_contents( $dest, $out_buf) && YII_ENV_DEV ) {
+				if( false === file_put_contents( $dest, $data ) && YII_ENV_DEV ) {
 					throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
 				}											
 			}
 
-			if(  $changes_src || $changes_dest ) {
-				$this->jsonData->changeAssetVersion( $assetName );
+			if( $changes_dest || $changes_src ) {
+				$this->jsonData->changeAssetVersion( $asset->name() );
 				$changes_cfg = true;
 			}
 
-			$this->jsonData->addNewDestData( $assetName, $dest, file_exists( $dest ) ? filemtime( $dest ) : 0 );
-			$this->assetsToWatch[$assetName]['version'] = $this->jsonData->getAssetVersion( $assetName );
+			$this->jsonData->addNewDestData( $asset->name(), $dest, $destMTime );
+			$asset->setVersion( $this->jsonData->getAssetVersion( $asset->name() ) );
+
+			$this->performAdditionalActions( $asset, $view );
 		}
 
 		if( $changes_cfg ) {
@@ -138,6 +125,31 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 		}
 		
 		$this->jsonData->updateAssetsInfo();
+	}
+
+	public function performAdditionalActions( AssetIterator &$asset, \yii\web\View &$view  ) {
+		$assetOptions = $asset->options();
+		
+		//	Add additional link for styles: <noscript><link rel="stylesheet" ...></noscript>
+		// 	IF 
+		//		- option is not set 
+		//				OR
+		//		- option is set to 'true'
+		$noscript = ( !isset( $assetOptions['noscript'] ) || $assetOptions['noscript'] );
+		if( !$asset->isScript() && $noscript ) {	
+			$dest = substr( $asset->dest(), strlen( $this->webPath ) - 1 );	
+			$view->registerCssFile( $dest, [ 'rel' => 'stylesheet', 'noscript' => true ], $asset->name() );
+		}
+
+		//	Add additional preload link for all assets if option is set		
+		// 	IF 		
+		//		- option is set to 'true'
+		$preload = ( isset( $assetOptions['preload'] ) && $assetOptions['preload'] );
+		if( $preload ) {	
+			$dest = substr( $asset->dest(), strlen( $this->webPath ) - 1 );
+			$as = $asset->isScript() ? 'script' : 'style';
+			$view->registerCssFile( $dest, [ 'rel' => 'preload', 'as' => $as ], $asset->name() );
+		}
 	}
 
 	public function clearLinks() {
@@ -161,7 +173,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 		//Yii::$app->response->data = str_replace( '</body>', "\r\n<script>\r\n" . $script . "\r\n</script>\r\n</body>", Yii::$app->response->data );				
     }
 	
-	public function minifyCSS( $input = array() ) {
+	public function minifyCSS( &$input = array() ) {
 		$input_css = '';	
 		
 		if( is_array( $input ) ) {
@@ -212,7 +224,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 		return $output_css;
 	}	
 
-	public function minifyJS( $input = array() ) {		
+	public function minifyJS( &$input = array() ) {		
 		$data = '';		
 		
 		if( is_array( $input ) ) {
@@ -228,7 +240,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 		return \JShrink\Minifier::minify($data, array('flaggedComments' => false));
 	}
 
-	public function combineFiles( $files = array() ) {
+	public function combineFiles( &$files = array() ) {
 		$buf = null;
 
 		foreach($files as $file) {

@@ -20,13 +20,17 @@ class AssetIterator implements \Iterator {
         foreach( $assetsToWatch as $assetName => $assetOptions ) {
             $assetOptions['name'] = $assetName;
             $this->push( $assetOptions );            
-        }         
+        }
+        $this->position = 0;         
     }
+
+
+
 
     /**
      *  Returns element with current position
      */
-    public function current() {
+    public function &current() {        
         return $this->assets[$this->position];
     }
     /**
@@ -42,14 +46,14 @@ class AssetIterator implements \Iterator {
     public function next() 
     {
         ++$this->position;
-        return $this->assets[$this->position];        
+        //return $this->assets[$this->position];        
     }
     /**
      *  Resets position
      */
     public function rewind() {
         $this->position = 0;
-        return $this->assets[$this->position];
+        //return $this->assets[$this->position];
     }
     /**
      *  Validates element at current position
@@ -79,10 +83,10 @@ class AssetIterator implements \Iterator {
         return $count;       
     }
     /**
-     *  Pushes element at end
+     *  Validates asset type from file extension or from type 'option'
      */
     public function validateAssetType( $index = -1 ) {
-        if( $index === -1 )
+        if( $index < 0 )
             $index = $this->position;
         
         if( strpos( $this->assets[$index]['dest'], '.css' ) !== FALSE || $this->assets[$index]['type'] === 'link' ) {
@@ -94,45 +98,143 @@ class AssetIterator implements \Iterator {
         }
         return true;
     }
+
+
+
+
     /**
-     *  Pushes element at end
+     *  Returns destionation
      */
-    public function validateDestination( $index = -1 ) {
-        if( $index === -1 )
+    public function &dest( $index = -1 ) {
+        if( $index < 0 )
             $index = $this->position;
-        
-        if( strpos( $this->assets[$index]['dest'], '.css' ) !== FALSE || $this->assets[$index]['type'] === 'link' ) {
-            $this->assets[$index]['assetType'] = self::LINK;
-        } else if( strpos( $this->assets[$index]['dest'], '.js' ) !== FALSE || $this->assets[$index]['type'] === 'script' ) {
-            $this->assets[$index]['assetType'] = self::SCRIPT;
-        } else {
-            if ( YII_ENV_DEV ) throw new Exception( 'alexshul/optimizer: asset type not detected for asset with destination "' . $this->assets[$index]['dest'] . '"' );            
-        }
-        return true;
+        return $this->assets[$index]['dest'];
     }
     /**
-     *  Pushes element at end
+     *  Checks if destionation is set
      */
-    public function fromCDN( $index = -1 ) {
-        if( $index === -1 )
-            $index = $this->position;
-        return ( filter_var( $this->assets[$index]['dest'], FILTER_VALIDATE_URL ) !== FALSE );
-    }
-    /**
-     *  Pushes element at end
-     */
-    public function hasDestination( $index = -1 ) {
-        if( $index === -1 )
+    public function hasDest( $index = -1 ) {
+        if( $index < 0 )
             $index = $this->position;
         return strlen( $this->assets[$index]['dest'] );
     }
     /**
-     *  Pushes element at end
+     *  Extends destination with base path
      */
-    public function getSrc( $index = -1 ) {
-        if( $index === -1 )
+    public function &extendDest( $base, $index = -1 ) {
+        if( $index < 0 )
+            $index = $this->position;
+           
+        return ( $this->assets[$index]['dest'] = $base . $this->assets[$index]['dest'] );
+    }
+    /**
+     *  Checks if asset is not local resource (will be loaded from CDN)
+     */
+    public function fromCDN( $index = -1 ) {
+        if( $index < 0 )
+            $index = $this->position;
+        return ( filter_var( $this->assets[$index]['dest'], FILTER_VALIDATE_URL ) !== FALSE );
+    }
+    
+
+
+
+    /**
+     *  Returns source files array
+     */
+    public function &src( $index = -1 ) {
+        if( $index < 0 )
             $index = $this->position;
         return $this->assets[$index]['src'];
+    }
+    /**
+     *  Checks if destionation is set
+     */
+    public function hasSrc( $index = -1 ) {
+        if( $index < 0 )
+            $index = $this->position;
+        return count( $this->assets[$index]['src'] );
+    }
+    /**
+     *  Extends each source file with base path
+     */
+    public function extendSrc( $base, $index = -1 ) {
+        if( $index < 0 )
+            $index = $this->position;
+
+        foreach( $this->assets[$index]['src'] as &$srcFile ) {
+            $srcFile = $base . $srcFile;
+        }
+    }
+
+
+
+
+    /**
+     *  Returns asset name
+     */
+    public function &name( $index = -1 ) {
+        if( $index < 0 )
+            $index = $this->position;
+        return $this->assets[$index]['name'];
+    }
+
+    /**
+     *  Determines if asset type is script
+     */
+    public function isScript( $index = -1 ) {
+        if( $index < 0 )
+            $index = $this->position;
+
+        return ( $this->assets[$index]['assetType'] === self::SCRIPT );
+    }
+
+
+
+
+    /**
+     *  Returns asset version
+     */
+    public function &version( $index = -1 ) {
+        if( $index < 0 )
+            $index = $this->position;
+        return $this->assets[$index]['version'];
+    }
+    /**
+     *  Set asset version
+     */
+    public function setVersion( $version = 1, $index = -1 ) {
+        if( $index < 0 )
+            $index = $this->position;
+        return $this->assets[$index]['version'] = $version;
+    }
+
+
+
+    
+    /**
+     *  Checks if asset option is set
+     */
+    public function hasOption( string $option, $index = -1 ) {
+        if( $index < 0 )
+            $index = $this->position;
+        return isset( $this->assets[$index][$option] );
+    }
+    /**
+     *  Returns asset option if set
+     */
+    public function getOption( string $option, $index = -1 ) {
+        if( $index < 0 )
+            $index = $this->position;
+        return isset( $this->assets[$index][$option] ) ? $this->assets[$index][$option] : FALSE;
+    }
+    /**
+     *  Returns asset options
+     */
+    public function &options( $index = -1 ) {
+        if( $index < 0 )
+            $index = $this->position;
+        return $this->assets[$index];
     }
 }
 
