@@ -97,22 +97,7 @@ Extension has options:
 - `assetsToWatch` ***{array}*** *(default: empty array)*
 
      Array with keys = "random semantic name for your asset", and values = "array with options". Example:
-```
- 
-         'My styles bundle' => [                // Name of your asset
-                'condition' => false,               // Condition, which allows loader attach link with asset to the page head.
-                 'type' => 'link',                      // Name of tag element with link to asset, which loader script will attach to the page head. 
-                  'files' => [                              // Array of files for to watch and combine+minify
-                        'site' => [                         // File name asset
-                                'pathDirectory' => 'assets/data/css/site/',     //  Source path directory
-                                'fileName' => 'site.css',           // File name asset
-                                'version' => 'v1'                      // Version name
-                        ],
-                  ],
-                  'dest' => 'assets/styles.min.css',    // (Required) Destination file for your asset.    
-                  'autoload' => false                          // (Optional) If set to false - this asset will be not included to loader script.
-         ], 
-	 
+```	 
 	 'styles before' => [              // Name of your asset
 	                                'condition' => '1 == 1',             // Condition, which allows loader attach link with asset to the page head.
 					'type' => 'link',                      // Name of tag element with link to asset, which loader script will attach to the page head. 
