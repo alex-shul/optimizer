@@ -111,6 +111,19 @@ Extension has options:
                   ],
                   'dest' => 'assets/styles.min.css',    // (Required) Destination file for your asset.    
                   'autoload' => false                          // (Optional) If set to false - this asset will be not included to loader script.
-         ],               
+         ], 
+	 
+	 'styles before' => [              // Name of your asset
+	                                'condition' => '1 == 1',             // Condition, which allows loader attach link with asset to the page head.
+					'type' => 'link',                      // Name of tag element with link to asset, which loader script will attach to the page head. 
+					'src' => [	                            // Array of files for to watch and combine+minify					
+						'assets/src/css/site/site.css'
+					],
+					'dest' => 'assets/styles.min.css',	   // (Required) Destination file for your asset.   				
+					//'autoload' => false,
+					'preload' => true,
+					'showPage' => true,
+					'autoload' => false                          // (Optional) If set to false - this asset will be not included to loader script.
+                ]
             
 ```
