@@ -20,12 +20,17 @@ class AssetLoader {
 			window.addEventListener( 'load', function(){
 				function AssetManager() {
 					var _queue = [],
-						_loading = false;			
-					function next() {
+						_loading = false,
+						_loaded = false,			
+					_next = this.next = function () {
 						if( _queue.length && !_loading ) {
 							load( _queue.shift(), function(){
+								if( _loaded ) {
+									document.body.classList.add('loaded');
+									_loaded = false;
+								}
 								_loading = false;
-								next();
+								_next();
 							});
 							_loading = true;
 						}
@@ -48,23 +53,13 @@ class AssetLoader {
 						e.onerror = cb;
 						
 						document.head.appendChild( e );
+
+						if( typeof asset.loaded !== 'undefined' )
+							_loaded = true;
 					}
-					this.enqueue = function( resource ) {
-						if( typeof resource !== 'string' )
-							return;
-
-						var asset = {
-							'src' : resource
-						}						
-						if( arguments.length > 1 ) {
-							asset.type = arguments[1];
-						}
-
+					this.enqueue = function ( asset ) {
 						_queue.push( asset );
-						next();
-
-						return this;			
-					}
+					}					
 				}
 				var m = new AssetManager();
 				
@@ -91,23 +86,29 @@ JS;
 			
 			$tab = '				';
 			$type = '';
+			$loaded = '';
 			//	If 'type' is set:
 			//		1) Push it into js 
 			//		2) Not set version due to errors with CDN links, for example:
 			//			"https://fonts.googleapis.com/css?family=Roboto"
 			if( is_string( $asset['type'] ) ) {
-				$type =  ", '" . $asset['type'] . "'";
+				$type =  ", type:'" . $asset['type'] . "'";
 				$version_print = '';
 			} else
 				$version_print = '?v=' . $asset['version'];
+
+			if( isset( $asset['showPage'] ) && $asset['showPage'] ) {
+				$loaded = ', loaded:true';
+			}
+				
 
 			if( is_string( $asset['condition'] ) ) {
 				$script .= "\r\n" . $tab . 'if( ' . $asset['condition'] . ' )';
 				$tab = '					';
 			}
 
-			$script .= "\r\n" . $tab . "m.enqueue('" . $asset['dest'] . $version_print . "'" . $type . ");";
+			$script .= "\r\n" . $tab . "m.enqueue({src:'" . $asset['dest'] . $version_print . "'" . $type . $loaded . "});";
 		}
-		$script .= "\r\n";	
+		$script .= "\r\n" . $tab ."m.next();\r\n";	
 	}
 }

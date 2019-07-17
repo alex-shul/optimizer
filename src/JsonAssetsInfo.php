@@ -64,9 +64,11 @@ class JsonAssetsInfo
      */
     public function checkConfigFile( $file ) {
         $now = file_exists( $file ) ? filemtime( $file ) : 0;
+        //Yii::debug('NOW: ' . $now .'OLD: ' . $this->configFileMTime);
         if( $now > $this->configFileMTime ) {
             $this->configFileMTime = $now;
-            return true;
+            $this->unsavedChanges = true;
+            return true;           
         }
         return false;
     }
@@ -87,6 +89,26 @@ class JsonAssetsInfo
              $this->oldDataArray[$nameAsset]['src'][$file]['latest'] != $latest) {
 
             //Yii::debug('checkAssetSrcData() Asset name: ' . $nameAsset . ' File: ' . $file . ' Latest: ' . $latest);
+            $this->unsavedChanges = true;
+            return true;
+        }
+        return false;
+    } 
+
+    /** 
+     * Сверяет данные полученные из json и полученные из конфига
+     * @param $nameAsset
+     * @param $file
+     * @param $latest
+     * @return bool
+     */
+    public function checkAssetSrcCountData( $nameAsset )
+    {
+        //Yii::debug(print_r($this->oldDataArray,true));
+        if ( !array_key_exists( $nameAsset, $this->oldDataArray ) ||
+             !array_key_exists( 'src', $this->oldDataArray[$nameAsset] ) ||           
+             count( $this->oldDataArray[$nameAsset]['src'] ) != count( $this->newDataArray[$nameAsset]['src'] ) ) {
+                           
             $this->unsavedChanges = true;
             return true;
         }
