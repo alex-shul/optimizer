@@ -1,6 +1,6 @@
 # yii2-optimizer
 > **Help is welcome!** 
-The project is under development, so you can commit to the master branch. You can also write about errors found in "issues".
+The project is under development. You can write about errors found in "issues".
 
 Tool for automatic assets optimization. Work with CSS &amp; JS files. This tool created as Yii2 extension. Refactoring in progress...
 
@@ -40,50 +40,39 @@ Tool for automatic assets optimization. Work with CSS &amp; JS files. This tool 
         ...
         'optimizer' => [
             'class' => 'alexshul\optimizer\Module',
+			'assetsConfigFile' => __FILE__,
             'assetsClearStyles' => false,
             'assetsClearScripts' => false,
 	        'assetsAddLoader' => true,
-	         'assetsMinifyLoader' => true,
-	         'assetsToWatch' => [
-	                'My styles bundle' => [
-	                        'condition' => false,
-                             'type' => 'link',
-                              'files' => [
-                                     'site' => [
-                                         'pathDirectory' => 'assets/data/css/site/',
-                                         'fileName' => 'site.css',
-                                         'version' => 'v1'
-                                     ],
-                              ],
-                              'dest' => 'assets/styles.min.css',
-                              'autoload' => false
-                     ],
-                    'Promise fallback' => [ 
-                                'condition' => 'typeof Promise !== \'function\'',          
-                                'dest' => 'assets/fallbacks/promise.min.js'                                 
-                    ],
-                    'fetch fallback' => [ 
-                                'condition' => 'typeof fetch !== \'function\'',          
-                                'dest' => 'assets/fallbacks/fetch.umd.js'                                        
-                    ],
-                    'My scripts bundle' => [
-                                'condition' => false,
-                                 'type' => 'script',
-                                 'files' => [
-                                     'main' => [
-                                         'pathDirectory' => 'assets/data/js/main/',
-                                         'fileName' => 'main.js',
-                                         'version' => 'v2'
-                                     ],
-                                     'hello' => [
-                                         'pathDirectory' => 'assets/data/js/hello/',
-                                         'fileName' => 'hello.js',
-                                         'version' => 'v1'
-                                     ],
-                                 ],
-                                 'dest' => 'assets/scripts.min.js'
-                    ],
-             ],
+	        'assetsMinifyLoader' => false,
+	        'assetsToWatch' => [
+	            'styles before' => [
+					'src' => [						
+						'assets/src/css/site/site.css'
+					],
+					'dest' => 'assets/styles.min.css',					
+					'autoload' => false,
+					'preload' => true,
+					'showPage' => true
+                ],
+                'Promise fallback' => [ 
+					'condition' => 'typeof Promise !== \'function\'',          
+					'dest' => 'assets/fallbacks/promise.min.js'                                 
+            	],
+                'fetch fallback' => [ 
+					'condition' => 'typeof fetch !== \'function\'',          
+					'dest' => 'assets/fallbacks/fetch.umd.js'                                        
+            	],
+                'My scripts bundle' => [
+					'type' => 'script',
+					'src' => [
+						'assets/src/js/file_one.js',
+						'assets/src/js/file_two.js',
+						'assets/src/js/file_three.js'
+					],
+					'dest' => 'assets/scripts.min.js'					
+                ],
+			]
         ],
     ],
 ```
@@ -107,28 +96,7 @@ Extension has options:
 	If true - minifies loader javascript before adding it to the page.
 - `assetsToWatch` ***{array}*** *(default: empty array)*
 
-    Example directory structure:
-```
-     data          
-     ├─── css
-     │    └─── site
-     │         ├─── v1
-     │         │    └── site.css
-     │         └─── v2
-     │              └── site.css
-     └─── js
-          ├─── main
-          │    ├─── v1
-          │    │    └── main.js
-          │    └─── v2
-          │         └── main.js
-          └─── hello
-               ├─── v1
-               │    └── hello.js
-               └─── v2
-                    └── hello.js  
-```
-   Array with keys = "random semantic name for your asset", and values = "array with options". Example:
+     Array with keys = "random semantic name for your asset", and values = "array with options". Example:
 ```
  
          'My styles bundle' => [                // Name of your asset
