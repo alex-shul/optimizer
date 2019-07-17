@@ -32,10 +32,6 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	private $basePath = null;
 	private $webPath = null;
 	private $jsonData = null;
-	
-	const UNKNOWN = 0;
-	const LINK 	  = 1;
-	const SCRIPT  = 2;
 
 	function __construct() {
 		$this->cache = new Cache;	
