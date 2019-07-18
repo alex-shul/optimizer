@@ -89,8 +89,8 @@ JS;
 			$loaded = '';
 			//	If 'type' is set:
 			//		1) Push it into js 
-			//		2) Not set version due to errors with CDN links, for example:
-			//			"https://fonts.googleapis.com/css?family=Roboto"
+			//		2) Do not set version due to errors with CDN links, for example:
+			//			"https://fonts.googleapis.com/css?family=Roboto?v=1"
 			if( is_string( $asset['type'] ) ) {
 				$type =  ", type:'" . $asset['type'] . "'";
 				$version_print = '';

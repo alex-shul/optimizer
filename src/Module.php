@@ -41,24 +41,30 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 
 	public function bootstrap($app) {		
 		Event::on(View::className(), View::EVENT_BEGIN_PAGE, function ( $event ) {				
-			$this->run( $event->sender );				
+			$this->onBeginPage( $event->sender );				
+		});
+		Event::on(View::className(), View::EVENT_END_PAGE, function ( $event ) {				
+			$this->onEndPage( $event->sender );				
 		});
 	}
 
-	protected function run( \yii\web\View &$view ) {
-		if( !is_dir($this->basePath) )
-			return false;
+	protected function onBeginPage( \yii\web\View &$view ) {
+		if( $this->assetsClearStyles || $this->assetsClearScripts )
+			$this->unregisterAssets( $view );	
+	}
 
-		$asset = new AssetIterator( $this->assetsToWatch );		
+	protected function onEndPage( \yii\web\View &$view ) {
+		if( $this->assetsClearStyles || $this->assetsClearScripts )
+			$this->unregisterAssets( $view );
 
+		if( !is_dir( $this->basePath ) )
+			return;
+
+		$asset = new AssetIterator( $this->assetsToWatch );
 		$this->checkForChanges( $asset, $view );
 
-		if( $this->assetsClearStyles || $this->assetsClearScripts )
-			$this->clearLinks();
-
 		if( $this->assetsAddLoader )
-			$this->addLoader();
-			//Yii::debug($this->assetsAddLoader);
+			$this->addLoader();			
 	}
 
 	public function checkForChanges( AssetIterator &$asset, \yii\web\View &$view ) {
@@ -148,9 +154,16 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 		}
 	}
 
-	public function clearLinks() {
-		//	Not released yet...
-    }
+	public function unregisterAssets( \yii\web\View &$view ) {
+		foreach( $view->assetBundles as $key => &$asset ) {			
+			if( $this->assetsClearStyles && count( $asset->css ) ) {
+				array_splice( $asset->css, 0 );		
+			}
+			if( $this->assetsClearScripts && count( $asset->js ) ) {
+				array_splice( $asset->js, 0 );
+			}
+		}
+	}
 
 	public function addLoader() {		
 		$script = $this->cache->getLoaderScript();
@@ -243,7 +256,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 			try {
 				$data = file_get_contents($file);
 			} catch( Exception $e ) {
-				if( YII_ENV_DEV ) throw $e;
+				if( 0 && YII_ENV_DEV ) throw $e;
 				continue;
 			}
 			

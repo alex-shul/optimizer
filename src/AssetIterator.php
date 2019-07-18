@@ -2,6 +2,7 @@
 
 namespace alexshul\optimizer;
 use Yii;
+
 class AssetIterator implements \Iterator {
 
 	private $position = 0;
