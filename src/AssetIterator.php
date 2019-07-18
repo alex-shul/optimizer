@@ -121,7 +121,7 @@ class AssetIterator implements \Iterator {
     /**
      *  Extends destination with base path
      */
-    public function &extendDest( $base, $index = -1 ) {
+    public function extendDest( $base, $index = -1 ) {
         if( $index < 0 )
             $index = $this->position;
            
