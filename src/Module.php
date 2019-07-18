@@ -54,9 +54,6 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	}
 
 	protected function onEndPage( \yii\web\View &$view ) {
-		if( $this->assetsClearStyles || $this->assetsClearScripts )
-			$this->unregisterAssets( $view );
-
 		if( !is_dir( $this->basePath ) )
 			return;
 
