@@ -64,7 +64,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 			$this->addLoader();			
 	}
 
-	public function checkForChanges( AssetIterator &$asset, \yii\web\View &$view ) {
+	public function checkForChanges( AssetIterator &$asset, \yii\web\View &$view ) {		
         $this->jsonData = new JsonAssetsInfo();
 		$this->jsonData->loadAssetsInfo( $this->cache );
 		$changes_cfg = $this->jsonData->checkConfigFile( $this->assetsConfigFile );	
@@ -97,7 +97,10 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 					$changes_src = $this->jsonData->checkAssetSrcData( $asset->name(), $srcFile, $srcMTime );
 				}
 			}
-			$changes_src = $this->jsonData->checkAssetSrcCountData( $asset->name() );
+
+			//	Если изменений всё ещё не обнаружено - проверяем изменилось ли количество исходных файлов в конфиге
+			if( !$changes_src )
+				$changes_src = $this->jsonData->checkAssetSrcCountData( $asset->name() );
 
 			if( $asset->hasSrc() && ( !file_exists( $dest ) || $changes_src ) ) {
 				Yii::debug( 'Minifying ' . $asset->name() . '...' );
