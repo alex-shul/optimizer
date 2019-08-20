@@ -15,6 +15,7 @@ use yii\web\View;
 use yii\console\Exception;
 use tubalmartin\CssMin\Minifier as CSSmin;
 use \JShrink\Minifier;
+use ScssPhp\ScssPhp\Compiler;
 use alexshul\optimizer\Cache as Cache;
 use alexshul\optimizer\AssetLoader as AssetLoader;
 use alexshul\optimizer\AssetIterator as AssetIterator;
@@ -193,6 +194,10 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 			if( YII_ENV_DEV ) throw new Exception('yii2-optimizer::minifyCSS - invalid input format.');
 			return $input_css;
 		}
+
+		// Compile scss, if exists
+		$scss = new Compiler();
+		$input_css = $scss->compile( $input_css );
 
 		// Create a new CSSmin object.
 		// By default CSSmin will try to raise PHP settings.

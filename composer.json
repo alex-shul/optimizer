@@ -15,7 +15,8 @@
 		"php": ">=5.3.1",
 		"yiisoft/yii2": "~2.0.0",
 		"tubalmartin/cssmin": "*",		
-		"tedivm/jshrink": "~1.0"
+		"tedivm/jshrink": "~1.0",
+		"scssphp/scssphp": "1.0.3"
 	},
 	"repositories": [
 		{
