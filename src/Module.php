@@ -28,6 +28,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	public  $assetsClearScripts = false;
 	public  $assetsAddLoader = false;
 	public  $assetsMinifyLoader = false;
+	public  $scssImportBasePath = '';
 
 	private $cache = null;	
 	private $basePath = null;
@@ -36,7 +37,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 
 	function __construct() {
 		$this->cache = new Cache;	
-		$this->basePath = Yii::getAlias('@app') . '/';	
+		$this->basePath = Yii::getAlias('@app') . '/';
 		$this->webPath = Yii::getAlias('@webroot') . '/';		
 	}	
 
@@ -184,10 +185,12 @@ class Module extends \yii\base\Module implements BootstrapInterface {
     }
 	
 	public function minifyCSS( &$input = array() ) {
-		$input_css = '';	
+		$input_css = '';
+		//$base_path = Yii::getAlias('@app') . '/';	
 		
 		if( is_array( $input ) ) {
-			$input_css = $this-> combineFiles( $input );			
+			$input_css = $this->combineFiles( $input );
+			//$base_path .= $this->findBasePath( $input ) . '/';			
 		} else if( is_string( $input ) ) {
 			$input_css = $input;
 		} else {
@@ -196,7 +199,11 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 		}
 
 		// Compile scss, if exists
+		// yii::debug('SCSS PATH: '.$this->scssImportBasePath);
+		// return;
+		
 		$scss = new Compiler();
+		$scss->setImportPaths( Yii::getAlias('@app') . '/' . $this->scssImportBasePath );
 		$input_css = $scss->compile( $input_css );
 
 		// Create a new CSSmin object.
@@ -269,5 +276,28 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 		}
 
 		return $buf;
-	}	
+	}
+	
+	public function findBasePath( &$paths = [] )
+	{
+		$base = FALSE;
+
+		foreach( $paths as $path ) {
+			$pos_win = strrpos( $path, '\\' );
+			$pos_win = $pos_win === FALSE ? 999 : $pos_win;		
+			
+			$pos_lin = strrpos( $path, '/' );
+			$pos_lin = $pos_lin === FALSE ? 999 : $pos_lin;			
+			
+			$pos = min( $pos_win, $pos_lin );
+		   
+			
+			$path_base = substr( $path, 0, $pos );
+			if( $base === FALSE or strlen( $path_base ) < strlen( $base ) ) {
+				$base = $path_base;
+			}
+		}
+
+		return $base;
+	}
 }
