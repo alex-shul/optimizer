@@ -284,6 +284,8 @@ class JsonAssetsInfo
 			$this->newAssetDataArray[$nameAsset]['version'] = 1;
         }	
         
-        //Yii::debug('Data: '.print_r($this->newAssetDataArray,true));        
+        //Yii::debug('Data: '.print_r($this->newAssetDataArray,true)); 
+        
+        return $this->newAssetDataArray[$nameAsset]['version'];
 	}
 }

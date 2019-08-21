@@ -72,7 +72,7 @@ class AssetIterator implements \Iterator {
             'name' => 'default',
             'src' => [],
             'dest' => '',
-		    'autoload' => false,
+		    'autoload' => true,
 		    'condition' => '',
 		    'type' => '',
 		    'assetType' => self::UNKNOWN,

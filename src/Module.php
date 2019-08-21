@@ -64,7 +64,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 		$this->checkForChanges( $asset, $view );
 
 		if( $this->assetsAddLoader )
-			$this->addLoader();			
+			$this->addLoader( $asset );			
 	}
 
 	public function checkForChanges( AssetIterator &$asset, \yii\web\View &$view ) {		
@@ -137,7 +137,11 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 			}
 
 			if( $need_rebuild ) {
-				$this->jsonData->changeAssetVersion( $asset->name() );
+				$new_version = $this->jsonData->changeAssetVersion( $asset->name() );
+
+				$asset->setVersion( $new_version );
+				$this->assetsToWatch[$asset->name()]['version'] = $new_version;
+				
 				$changes_cfg = true;
 			}
 
@@ -190,7 +194,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 		}
 	}
 
-	public function addLoader() {	
+	public function addLoader( AssetIterator &$asset ) {	
 		$loader = new AssetLoader( $this->assetsToWatch );
 		$pathEx = $loader->getScriptPathEx();
 		$script = false;
