@@ -18,7 +18,8 @@ class Cache {
 	function __construct() {
 		$base = Yii::getAlias('@runtime');
 		$this->iniFileName = $base . '/alex-shul/yii2-optimizer/cache.ini';
-		$this->loaderFileName = $base . '/alex-shul/yii2-optimizer/loader.js';
+		$this->loaderPath = $base . '/alex-shul/yii2-optimizer/loader';
+		$this->loaderFileName = 'loader.js';
 		$this->check();	
 	}
 
@@ -79,15 +80,17 @@ class Cache {
 		$this->save();
 	}
 
-	public function saveLoaderScript( $script ) {
-		$dir = substr( $this->loaderFileName, 0, strrpos( $this->loaderFileName, '/' ) );
+	public function saveLoaderScript( $script, $pathEx = '' ) {
+		$fileName = $this->getLoaderScriptFileName( $pathEx );
+
+		$dir = substr( $fileName, 0, strrpos( $fileName, '/' ) );
 		if( !file_exists( $dir ) )
 			mkdir( $dir, 0777, true );		
 		
-		if( false === file_put_contents( $this->loaderFileName, $script ) && YII_ENV_DEV ) {
+		if( false === file_put_contents( $fileName, $script ) && YII_ENV_DEV ) {
             throw new Exception(
                 sprintf(
-                    'Failed to open file `%s\' for writing.', $this->loaderFileName
+                    'Failed to open file `%s\' for writing.', $fileName
                 )
 			);			
 		}
@@ -95,17 +98,31 @@ class Cache {
         return true;
 	}
 
-	public function getLoaderScript() {
-		if( file_exists( $this->loaderFileName ) ) {
-			return file_get_contents( $this->loaderFileName );
+	public function getLoaderScriptFileName( $pathEx = '' ) {
+		$path_len = strlen( $pathEx );
+
+		if( $path_len and $pathEx[$path_len-1] !== '/' ) {			
+			$pathEx .= '/';
+		}
+
+		return $this->loaderPath . '/' . $pathEx . $this->loaderFileName;		
+	}
+
+	public function getLoaderScript( $pathEx = '' ) {
+		$fileName = $this->getLoaderScriptFileName( $pathEx );
+
+		if( file_exists( $fileName ) ) {
+			return file_get_contents( $fileName );
 		}
 
 		return false;		
 	}
 
-	public function clearLoaderScript() {
-		if( file_exists( $this->loaderFileName ) ) {
-			return unlink( $this->loaderFileName );
+	public function clearLoaderScript( $pathEx = '' ) {
+		$fileName = $this->getLoaderScriptFileName( $pathEx );
+
+		if( file_exists( $fileName ) ) {
+			return unlink( $fileName );
 		}
 
 		return false;

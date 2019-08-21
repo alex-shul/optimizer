@@ -7,12 +7,36 @@
 
 namespace alexshul\optimizer;
 
+use Yii;
+
 class AssetLoader {
 
 	private $assetsList = array();
 
 	function __construct( $assetsToWatch ) {
 		$this->assetsList = $assetsToWatch;
+	}
+
+	public function getScriptPathEx() {
+		$cur_c = Yii::$app->controller->id;
+		$cur_a = Yii::$app->controller->action->id;
+		$use_action = false;
+
+		foreach( $this->assetsList as $asset ) {
+			if( array_key_exists( 'used', $asset ) and
+				array_key_exists( 'controller', $asset['used'] ) and
+				$asset['used']['controller'] == $cur_c and
+				array_key_exists( 'action', $asset['used'] ) ) {
+				$use_action = true;
+			}
+		}
+
+		$pathEx = $cur_c;
+		if( $use_action ) {
+			$pathEx .= '/' . $cur_a;
+		}			
+		
+		return $pathEx;
 	}
 
 	public function generateScript() {
@@ -73,8 +97,53 @@ JS;
 		return $script;
 	}
 
-	private function printAssetsTo( &$script ) {			
+	private function printAssetsTo( &$script ) {
+		$cur_c = Yii::$app->controller->id;
+		$cur_a = Yii::$app->controller->action->id;
+
 		foreach( $this->assetsList as $asset ) {
+			if( array_key_exists( 'used', $asset ) ) {
+				// Script is need by default
+				$skip = false;
+
+				// Get paramters for checking conditions for script need on this page
+				$only = array_key_exists( 'condition', $asset['used'] ) && $asset['used']['condition'] == 'except' ? false : true;
+				$target_c = array_key_exists( 'controller', $asset['used'] ) ? $asset['used']['controller'] : false;
+				$target_a = array_key_exists( 'action', $asset['used'] ) ? $asset['used']['action'] : false;
+				
+				// Checking conditions only if controller is set
+				if( $target_c ) {
+
+					// If condition = used only on specified pages
+					if( $only ) {
+						// Current controller not a target controller
+						if( $cur_c != $target_c ) {
+							$skip = true;
+						}
+
+						// Current action is set AND is not a target action
+						if( $target_a && $target_a != $cur_a ) {
+							$skip = true;
+						}
+
+					// If condition = used on all pages except specified
+					} else {
+						// Current controller is a target controller
+						if( $cur_c == $target_c ) {
+							$skip = true;
+						}
+
+						// Current action is set AND is a target action
+						if( $target_a && $target_a == $cur_a ) {
+							$skip = true;
+						}	
+					}	
+	
+					// If conditions checked and script not needed on this page -> then skip him
+					if( $skip ) continue;
+				}				
+			}
+
 			if( !isset( $asset['dest'] ) )
 				continue;
 

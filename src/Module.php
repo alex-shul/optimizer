@@ -34,6 +34,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	private $basePath = null;
 	private $webPath = null;
 	private $jsonData = null;
+	private $scriptNeedRebuild = false;
 
 	function __construct() {
 		$this->cache = new Cache;	
@@ -69,8 +70,14 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 	public function checkForChanges( AssetIterator &$asset, \yii\web\View &$view ) {		
         $this->jsonData = new JsonAssetsInfo();
 		$this->jsonData->loadAssetsInfo( $this->cache );
+
+		// 1. Check config file
 		$changes_cfg = $this->jsonData->checkConfigFile( $this->assetsConfigFile );	
 
+		// 2. Check scss files in import base directory
+		$changes_scss = $this->jsonData->checkScssData( Yii::getAlias('@app') . '/' . $this->scssImportBasePath );
+
+		// 3. Check asset files
 		foreach( $asset as $assetOptions ) {
 			if( !$asset->hasDest() || $asset->fromCDN() )
 				continue;
@@ -80,6 +87,7 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 
 			$changes_src = false;
 			$changes_dest = $this->jsonData->checkAssetDestData( $asset->name(), $dest, $destMTime );
+			$need_rebuild = false;
 
 			$src_latest = 0;
 			foreach( $asset->src() as &$srcFile ) {
@@ -104,16 +112,31 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 			if( !$changes_src )
 				$changes_src = $this->jsonData->checkAssetSrcCountData( $asset->name() );
 
-			if( $asset->hasSrc() && ( !file_exists( $dest ) || $changes_src ) ) {
-				Yii::debug( 'Minifying ' . $asset->name() . '...' );
-				$data = $asset->isScript() ? $this->minifyJS( $asset->src() ) :  $this->minifyCSS( $asset->src() );
-				
-				if( false === file_put_contents( $dest, $data ) && YII_ENV_DEV ) {
-					throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
-				}											
+			if( $asset->hasSrc() ) {
+				$is_script = $asset->isScript();				
+
+				// If dest file not exists or source files has changes
+				if( !file_exists( $dest ) || $changes_src ) {
+					$need_rebuild = true;
+				}
+
+				// If this is styles asset bundle and scss files has changes
+				if( !$is_script && $changes_scss ) {
+					$need_rebuild = true;
+				}
+	
+				// If need rebuild - minifying/compiling js/css/scss
+				if( $need_rebuild ) {
+					Yii::debug( 'Minifying ' . $asset->name() . '...' );
+					$data = $is_script ? $this->minifyJS( $asset->src() ) :  $this->minifyCSS( $asset->src() );
+					
+					if( false === file_put_contents( $dest, $data ) && YII_ENV_DEV ) {
+						throw new Exception( 'alexshul/optimizer: can\'t write to file "' . $dest . '"' );
+					}	
+				}														
 			}
 
-			if( $changes_dest || $changes_src ) {
+			if( $need_rebuild ) {
 				$this->jsonData->changeAssetVersion( $asset->name() );
 				$changes_cfg = true;
 			}
@@ -122,10 +145,10 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 			$asset->setVersion( $this->jsonData->getAssetVersion( $asset->name() ) );
 
 			$this->performAdditionalActions( $asset, $view );
-		}
+		}	
 
 		if( $changes_cfg ) {
-			$this->cache->clearLoaderScript();
+			$this->scriptNeedRebuild = true;			
 		}
 		
 		$this->jsonData->updateAssetsInfo();
@@ -167,17 +190,25 @@ class Module extends \yii\base\Module implements BootstrapInterface {
 		}
 	}
 
-	public function addLoader() {		
-		$script = $this->cache->getLoaderScript();
+	public function addLoader() {	
+		$loader = new AssetLoader( $this->assetsToWatch );
+		$pathEx = $loader->getScriptPathEx();
+		$script = false;
+		
+		if( $this->scriptNeedRebuild ) {
+			$this->cache->clearLoaderScript();
+		} else {
+			$script = $this->cache->getLoaderScript( $pathEx );
+		}
+		
 		//Yii::debug($script);
-		if( $script === false ) {
-			$loader = new AssetLoader( $this->assetsToWatch );			 
+		if( $script === false ) {					 
 			$script = $loader->generateScript();			
 
 			if( $this->assetsMinifyLoader )
 				$script = $this->minifyJS( $script );
 
-			$this->cache->saveLoaderScript( $script );
+			$this->cache->saveLoaderScript( $script, $pathEx );
 		}
 
 		Yii::$app->getView()->registerJs( $script, View::POS_END, 'loader' );
