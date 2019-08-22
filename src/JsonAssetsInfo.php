@@ -232,7 +232,7 @@ class JsonAssetsInfo
         ];
 
         if( !array_key_exists( 'version', $this->newAssetDataArray[$nameAsset] ) ) {
-            $this->newAssetDataArray[$nameAsset]['version'] = array_key_exists( 'version', $this->oldAssetDataArray[$nameAsset] ) ? $this->oldAssetDataArray[$nameAsset]['version'] : 1;
+            $this->newAssetDataArray[$nameAsset]['version'] = array_key_exists( $nameAsset, $this->oldAssetDataArray ) && array_key_exists( 'version', $this->oldAssetDataArray[$nameAsset] ) ? $this->oldAssetDataArray[$nameAsset]['version'] : 1;
         }
     }
 
