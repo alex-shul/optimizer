@@ -41,6 +41,8 @@ class AssetLoader {
 
 	public function generateScript() {
 		$script = <<< JS
+			document.documentElement.classList.remove('no-js');
+			document.documentElement.classList.add('js');
 			window.addEventListener( 'load', function(){
 				function AssetManager() {
 					var _queue = [],
@@ -50,6 +52,15 @@ class AssetLoader {
 						if( _queue.length && !_loading ) {
 							load( _queue.shift(), function(){
 								if( _loaded ) {
+									var l = document.getElementById('loader');
+									setTimeout( function(){ 
+										if( l ) {
+											l.style.opacity = 0;
+											setTimeout( function(){ l.remove() }, 300 );
+										}
+										document.body.classList.add('loaded');
+									}, 500 );
+									
 									document.body.classList.add('loaded');
 									_loaded = false;
 								}
