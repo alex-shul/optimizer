@@ -187,6 +187,8 @@ JS;
 				$tab = '					';
 			}
 
+			$asset['dest'] = $asset['dest'][0] === '/' ? $asset['dest'] : '/' . $asset['dest'];
+
 			$script .= "\r\n" . $tab . "m.enqueue({src:'" . $asset['dest'] . $version_print . "'" . $type . $loaded . "});";
 		}
 		$script .= "\r\n" . $tab ."m.next();\r\n";	
